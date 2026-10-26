@@ -131,7 +131,7 @@ SuccessExitStatus=0 1 143
 Restart=on-failure
 RestartSec=20
 # Shared box: hard caps so Minecraft can never starve the other projects.
-MemoryMax=5G
+MemoryMax=6G
 CPUQuota=350%
 Nice=2
 

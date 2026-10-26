@@ -127,7 +127,7 @@ password is generated on the server and saved to `/root/mc-owner-password.txt` (
 
 ### Isolation from other projects on the same box
 Everything lives in `/opt/minecraft`, runs as its own `minecraft` user, and is capped by systemd
-(`MemoryMax=5G`, `CPUQuota=350%`), so it can't starve other services, and sandboxed with
+(`MemoryMax=6G` for a 4G heap, `CPUQuota=350%`), so it can't starve other services, and sandboxed with
 `deploy/minecraft-hardening.conf` (read-only system, writes only to `/opt/minecraft`, no capabilities). The only shared change is
 one ufw rule for `25565/tcp`. RCON (25575) stays local.
 
