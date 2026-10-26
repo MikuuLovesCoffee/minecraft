@@ -75,7 +75,10 @@ cd web && npm ci && npm run build      # output: .next/standalone
 # systemd units, nginx site + Let's Encrypt). Secrets live only in /etc/craftmine/api.env.
 ```
 
-Custom skins are drawn by `tools/make_skins.py`.
+The owners' skins are shown in HD (256×256, same body, 4× finer pixels) on the site, made by
+`tools/hd_skins.py`; the 64×64 in-game versions are in `web/public/skins/ingame/`.
+Skin credits: MikuuLovesCoffee wears Technoblade's skin; xxbabyxv wears
+["devil's advocate" by viari](https://www.minecraftskins.com/skin/24198207/devil-s-advocate/) from The Skindex.
 
 ## Setup on a fresh server
 

@@ -19,7 +19,7 @@ const SR_SUFFIX: Record<string, string> = {
 };
 
 /**
- * Resolves a player's skin: their SkinsRestorer choice, then the bundled custom skins,
+ * Resolves a player's skin: the bundled custom (HD) skins, then their SkinsRestorer choice,
  * then the Mojang skin for premium names, then a default skin.
  */
 @Injectable()
@@ -35,9 +35,10 @@ export class SkinsService {
     const hit = this.cache.get(key);
     if (hit && Date.now() - hit.at < 10 * 60_000) return hit.skin;
 
+    // Bundled HD skins win over the 64x64 in-game choice, so the owners always look HD on the site.
     const skin =
-      (await this.fromSkinsRestorer(name)) ??
       this.fromCustom(key) ??
+      (await this.fromSkinsRestorer(name)) ??
       (await this.fromMojang(name)) ??
       (await this.download('https://mc-heads.net/skin/MHF_Steve', false, true));
     if (skin) this.cache.set(key, { at: Date.now(), skin });
@@ -112,7 +113,7 @@ export class SkinsService {
       const res = await fetch(u, { signal: AbortSignal.timeout(5000) });
       if (!res.ok || !(res.headers.get('content-type') ?? '').startsWith('image/png')) return null;
       const png = Buffer.from(await res.arrayBuffer());
-      return png.length < 64 * 1024 ? { png, slim } : null;
+      return png.length < 256 * 1024 ? { png, slim } : null;
     } catch (err) {
       this.log.warn(`skin download failed: ${(err as Error).message}`);
       return null;

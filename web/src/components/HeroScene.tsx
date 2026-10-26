@@ -1,23 +1,22 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { addArmor, DIAMOND, NETHERITE, type ArmorPalette } from './armor';
 
 interface Hero {
   name: string;
   skin: string;
   slim: boolean;
-  armor: ArmorPalette;
   turn: number;
   tag: string;
 }
 
+// HD (256x256) skins: same Minecraft body, 4x finer pixels
 const HEROES: Hero[] = [
-  { name: 'MikuuLovesCoffee', skin: '/skins/mikuulovescoffee.png', slim: false, armor: DIAMOND, turn: 0.45, tag: 'text-diamond' },
-  { name: 'xxbabyxv', skin: '/skins/xxbabyxv.png', slim: true, armor: NETHERITE, turn: -0.45, tag: 'text-pink' },
+  { name: 'MikuuLovesCoffee', skin: '/skins/mikuulovescoffee.png', slim: false, turn: 0.45, tag: 'text-gold' },
+  { name: 'xxbabyxv', skin: '/skins/xxbabyxv.png', slim: true, turn: -0.45, tag: 'text-pink' },
 ];
 
-/** The two owners standing together: him in diamond, her in netherite, with name tags. */
+/** The two owners standing together, with name tags. */
 export function HeroScene() {
   const refs = useRef<(HTMLCanvasElement | null)[]>([]);
 
@@ -46,9 +45,7 @@ export function HeroScene() {
         viewer.controls.enablePan = false;
         viewer.animation = new skinview3d.IdleAnimation();
         viewer.animation.speed = 0.8 + i * 0.15;
-        void viewer.loadSkin(hero.skin, { model: hero.slim ? 'slim' : 'default' }).then(() => {
-          if (!disposed) addArmor(viewer.playerObject, hero.armor, hero.slim);
-        });
+        void viewer.loadSkin(hero.skin, { model: hero.slim ? 'slim' : 'default' });
         const onResize = () => viewer.setSize(canvas.clientWidth, canvas.clientHeight);
         window.addEventListener('resize', onResize);
         viewers.push({

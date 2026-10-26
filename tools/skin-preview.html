@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Skin options</title>
+<style>
+  body { margin: 0; background: linear-gradient(180deg, #1e1640, #3a2470); color: #ece8ff; font: 600 15px system-ui, sans-serif; }
+  h2 { margin: 18px 24px 4px; font-size: 18px; }
+  .row { display: grid; grid-template-columns: repeat(4, 220px); gap: 8px; padding: 0 24px 8px; }
+  figure { margin: 0; text-align: center; }
+  canvas { width: 220px; height: 300px; display: block; }
+  figcaption { margin-top: -6px; }
+  .boy h2 { color: #4aedd9; } .girl h2 { color: #ff7eb6; }
+</style>
+</head>
+<body>
+<section class="boy"><h2>For MikuuLovesCoffee</h2><div class="row" id="boys"></div></section>
+<section class="girl"><h2>For xxbabyxv</h2><div class="row" id="girls"></div></section>
+<script src="skinview3d.bundle.js"></script>
+<script>
+  const skins = [
+    ['boys', 'boy1-coffee', 'B1 Coffee hoodie', 'default'],
+    ['boys', 'boy2-gamer', 'B2 Gamer + headphones', 'default'],
+    ['boys', 'boy3-frog', 'B3 Frog hoodie', 'default'],
+    ['boys', 'boy4-glasses', 'B4 Silver hair + glasses', 'default'],
+    ['girls', 'girl1-catpink', 'G1 Pink cat ears', 'slim'],
+    ['girls', 'girl2-bow', 'G2 Black hair + red bow', 'slim'],
+    ['girls', 'girl3-bunny', 'G3 Bunny ears lavender', 'slim'],
+    ['girls', 'girl4-strawberry', 'G4 Strawberry beret', 'slim'],
+  ];
+  for (const [row, file, label, model] of skins) {
+    const fig = document.createElement('figure');
+    const canvas = document.createElement('canvas');
+    const cap = document.createElement('figcaption');
+    cap.textContent = label;
+    fig.append(canvas, cap);
+    document.getElementById(row).append(fig);
+    const v = new skinview3d.SkinViewer({ canvas, width: 220, height: 300, zoom: 0.85, fov: 35, preserveDrawingBuffer: true });
+    v.globalLight.intensity = 2.6;
+    v.cameraLight.intensity = 1.0;
+    // Slightly turned and seen a little from above, so ears/hoods on top of the head show
+    v.playerObject.rotation.y = -0.45;
+    v.camera.position.y += 6;
+    v.camera.lookAt(0, 0, 0);
+    v.controls.update();
+    v.loadSkin(`${file}.png`, { model });
+  }
+</script>
+</body>
+</html>
