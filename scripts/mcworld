@@ -1,0 +1,103 @@
+#!/usr/bin/env python3
+"""mcworld - manage CraftMine worlds from the server shell.
+
+  mcworld create <name> [normal|flat|nether|end] [--private] [--creative] [--no-pvp]
+  mcworld allow  <world> <player>     # give a player access to a private world
+  mcworld deny   <world> <player>
+  mcworld list
+
+Every world gets its own inventory group (items never leak between worlds),
+an /warp <name> warp, and (if --private) is locked to players you `allow`.
+"""
+import hashlib, subprocess, sys, time, uuid, yaml, os, pwd
+
+S = "/opt/minecraft/server"
+PUBLIC_PERMS = ["mv.access.{w}", "essentials.warps.{w}"]
+
+
+def mc(*cmd):
+    out = subprocess.run(["mcctl", *cmd], capture_output=True, text=True).stdout.strip()
+    if out:
+        print("   ", out.splitlines()[0])
+    return out
+
+
+def offline_uuid(name):
+    # Same UUID the server gives an offline-mode (TLauncher) player of this name.
+    h = bytearray(hashlib.md5(f"OfflinePlayer:{name}".encode()).digest())
+    h[6] = (h[6] & 0x0F) | 0x30
+    h[8] = (h[8] & 0x3F) | 0x80
+    return str(uuid.UUID(bytes=bytes(h)))
+
+
+def spawn_of(world):
+    worlds = yaml.safe_load(open(f"{S}/plugins/Multiverse-Core/worlds.yml"))
+    for key, v in worlds.items():
+        if key.split(":")[-1] == world:
+            sp = v.get("spawn-location") or {}
+            return sp.get("x", 0.0), sp.get("y", 64.0), sp.get("z", 0.0)
+    return 0.0, 64.0, 0.0
+
+
+def write_warp(world):
+    x, y, z = spawn_of(world)
+    path = f"{S}/plugins/Essentials/warps/{world}.yml"
+    yaml.safe_dump({"world": world, "world-name": world, "x": x + 0.5, "y": float(y), "z": z + 0.5,
+                    "yaw": 0.0, "pitch": 0.0, "name": world}, open(path, "w"), sort_keys=False)
+    mc_user = pwd.getpwnam("minecraft")
+    os.chown(path, mc_user.pw_uid, mc_user.pw_gid)
+    mc("essentials", "reload")
+
+
+def create(args):
+    name = args[0]
+    kind = next((a for a in args[1:] if not a.startswith("--")), "normal").lower()
+    env, extra = {"normal": ("NORMAL", []), "flat": ("NORMAL", ["--world-type", "FLAT", "--no-structures"]),
+                  "nether": ("NETHER", []), "end": ("THE_END", [])}[kind]
+    print(f"creating {name} ({kind})")
+    mc("mv", "create", name, env, *extra)
+    if "--creative" in args:
+        mc("mv", "modify", name, "set", "gamemode", "creative")
+        mc("mv", "modify", name, "set", "portal-form", "none")
+    if "--no-pvp" in args:
+        mc("mv", "modify", name, "set", "pvp", "false")
+    mc("mvinv", "create-group", name)
+    mc("mvinv", "add-worlds", name, name)
+    mc("mvinv", "add-shares", name, "all")
+    if "--private" in args:
+        group = f"world-{name}"
+        mc("lp", "creategroup", group)
+        for p in PUBLIC_PERMS:
+            mc("lp", "group", group, "permission", "set", p.format(w=name), "true")
+        print(f"private: only the owner and players you `mcworld allow {name} <player>` can enter")
+    else:
+        for p in PUBLIC_PERMS:
+            mc("lp", "group", "default", "permission", "set", p.format(w=name), "true")
+    time.sleep(2)
+    write_warp(name)
+    print(f"done - players use /warp {name}")
+
+
+def allow(world, player, add=True):
+    u = offline_uuid(player)
+    mc("lp", "user", u, "parent", "add" if add else "remove", f"world-{world}")
+    print(f"{'allowed' if add else 'removed'} {player} ({u}) {'to' if add else 'from'} {world}")
+
+
+def main():
+    a = sys.argv[1:]
+    if not a or a[0] in ("-h", "--help", "help"):
+        print(__doc__)
+    elif a[0] == "create" and len(a) >= 2:
+        create(a[1:])
+    elif a[0] in ("allow", "deny") and len(a) == 3:
+        allow(a[1], a[2], a[0] == "allow")
+    elif a[0] == "list":
+        subprocess.run(["mcctl", "mv", "list"])
+    else:
+        print(__doc__)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

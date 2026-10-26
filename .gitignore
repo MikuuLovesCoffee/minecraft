@@ -1,0 +1,11 @@
+# Never commit server state or secrets
+server/
+worlds/
+backups/
+*.jar
+*.log
+*.db
+*.mv.db
+server.properties
+mc-owner-password.txt
+.env
