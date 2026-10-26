@@ -9,3 +9,11 @@ backups/
 server.properties
 mc-owner-password.txt
 .env
+
+# Build output
+node_modules/
+dist/
+.next/
+build/
+.gradle/
+*.tsbuildinfo
