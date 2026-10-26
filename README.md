@@ -36,9 +36,18 @@ Every world has **its own inventory**, so creative or kit items can never reach 
 - **Starter kit** on first join: wooden sword, pickaxe, axe and shovel, food for a day, a golden apple,
   torches and logs.
 
+### Spawn castle
+New players, logins and `/spawn` arrive in a stone castle at the world centre (walls, corner and gate
+towers, fountain plaza, four cottages, gardens, welcome signs) built by `tools/spawn_castle.py`
+(`tools/castle_preview.py` renders an isometric preview). The castle area is a WorldGuard safe zone:
+nobody can be hurt or break anything there. `/rtp` always goes to the SMP world, 300–2500 blocks out.
+Players log in at the castle (AuthMe) and are then sent back to where they logged out.
+
 ### Anti-cheat and protection
 - **AuthMe**: every player registers a password (the server runs in offline mode for TLauncher players, so names must be protected)
 - **GrimAC** anti-cheat (alerts admins, kicks at high violation levels), Paper **anti-xray**
+- **CraftGuard** (own plugin): kicks modded clients that announce themselves (Forge, Fabric, Quilt,
+  NeoForge, LabyMod brands; Forge/Fabric/World Downloader/Litematica channels). Owner/admins bypass.
 - **CombatLog**: logging out during a fight kills you, no teleporting out of combat
 - **Prism**: block logging and rollback · **InventoryRollbackPlus**: restore lost items
 - **WorldGuard**: protected spawn
@@ -90,6 +99,7 @@ install -m 755 mcworld /usr/local/bin/mcworld
 ./02-configure.sh                     # worlds, permissions, protections, backups, firewall port
 ./03-offline-login-private-world.sh   # TLauncher support + AuthMe, private world, owner rank
 ./04-quiz-kit-50-players.sh CraftQuiz-1.0.0.jar   # quiz plugin, starter kit, 50 slots, Grim kicks
+./05-spawn-castle-rtp-mods.sh ../tools/spawn_castle.py CraftGuard-1.0.0.jar   # castle, safe spawn, /rtp, mod blocker
 ```
 
 Build the plugins with `cd plugins/craftquiz && gradle build` and `cd plugins/craftskins && gradle build` (JDK 25).
@@ -101,7 +111,8 @@ password is generated on the server and saved to `/root/mc-owner-password.txt` (
 
 ### Isolation from other projects on the same box
 Everything lives in `/opt/minecraft`, runs as its own `minecraft` user, and is capped by systemd
-(`MemoryMax=5G`, `CPUQuota=350%`), so it can't starve other services. The only shared change is
+(`MemoryMax=5G`, `CPUQuota=350%`), so it can't starve other services, and sandboxed with
+`deploy/minecraft-hardening.conf` (read-only system, writes only to `/opt/minecraft`, no capabilities). The only shared change is
 one ufw rule for `25565/tcp`. RCON (25575) stays local.
 
 ## Managing it (server shell)

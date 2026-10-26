@@ -1,0 +1,7 @@
+# A client whose brand contains any of these words is kicked (case-insensitive).
+blocked-brands: [forge, fabric, quilt, neoforge, liteloader, rift, labymod]
+
+# A client that registers a plugin channel containing any of these is kicked.
+blocked-channels: [fml, forge, fabric, quilt, wdl, worlddownloader, litematica, schematica, freecam, xray]
+
+kick-message: "&cModlar taqiqlangan! &7Iltimos, oddiy (vanilla) Minecraft bilan kiring.\n&8Mods are not allowed — please join with vanilla Minecraft."

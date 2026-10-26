@@ -26,6 +26,15 @@ ProtectKernelModules=true
 ProtectControlGroups=true
 RestrictSUIDSGID=true
 LockPersonality=true
+ProtectKernelLogs=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+RestrictNamespaces=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+UMask=0077
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 # Next.js writes its fetch cache under .next/cache
 ReadWritePaths=/opt/craftmine/web/.next/cache

@@ -1,0 +1,10 @@
+name: CraftGuard
+version: '${version}'
+main: coffee.mikuuloves.craftguard.CraftGuard
+api-version: '26.3'
+description: Kicks modded clients (Forge, Fabric, world downloaders...) by client brand and mod channels.
+author: MikuuLovesCoffee
+permissions:
+  craftguard.bypass:
+    description: Allowed to join with a modded client.
+    default: op
