@@ -1,0 +1,29 @@
+# How often a question is asked, and how long players have to answer.
+interval-minutes: 5
+answer-seconds: 60
+# No quiz when fewer players than this are online.
+min-players: 1
+# Share of questions that are generated math problems (the rest come from questions.yml).
+math-chance: 0.5
+
+reward:
+  money-min: 50
+  money-max: 200
+  # Chance that the winner also gets a rare item.
+  item-chance: 0.15
+  # Console command that pays the winner ({player}, {amount}).
+  money-command: "eco give {player} {amount}"
+
+# Items are only handed out in these worlds. A winner standing anywhere else
+# (creative, arena) gets the item the next time they enter one of them.
+item-worlds: [world, world_nether, world_the_end, simple, private]
+
+# Rare item pool: higher weight = more common.
+rare-items:
+  - {material: DIAMOND, amount: 2, weight: 30}
+  - {material: EMERALD, amount: 5, weight: 25}
+  - {material: GOLDEN_APPLE, amount: 2, weight: 20}
+  - {material: EXPERIENCE_BOTTLE, amount: 16, weight: 15}
+  - {material: NETHERITE_SCRAP, amount: 1, weight: 5}
+  - {material: TOTEM_OF_UNDYING, amount: 1, weight: 3}
+  - {material: ENCHANTED_GOLDEN_APPLE, amount: 1, weight: 2}

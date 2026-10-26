@@ -1,0 +1,15 @@
+name: CraftQuiz
+version: '${version}'
+main: coffee.mikuuloves.craftquiz.CraftQuiz
+api-version: '26.3'
+description: Uzbek chat quiz every few minutes with money and rare item rewards.
+author: MikuuLovesCoffee
+commands:
+  quiz:
+    description: Manage the chat quiz (start, skip, reload).
+    usage: /quiz <start|skip|reload>
+    permission: craftquiz.admin
+permissions:
+  craftquiz.admin:
+    description: Start, skip and reload quizzes.
+    default: op

@@ -1,0 +1,34 @@
+[Unit]
+Description=CraftMine website (Next.js)
+After=network.target craftmine-api.service
+
+[Service]
+User=craftweb
+Group=craftweb
+WorkingDirectory=/opt/craftmine/web
+Environment=NODE_ENV=production
+Environment=PORT=3030
+Environment=HOSTNAME=127.0.0.1
+Environment=NEXT_TELEMETRY_DISABLED=1
+Environment=API_INTERNAL_URL=http://127.0.0.1:3031/api
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+MemoryMax=400M
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+# Next.js writes its fetch cache under .next/cache
+ReadWritePaths=/opt/craftmine/web/.next/cache
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,32 @@
+[Unit]
+Description=CraftMine website API (NestJS)
+After=network.target postgresql.service
+
+[Service]
+User=craftweb
+Group=craftweb
+# Read-only access to the Minecraft data (stats, AuthMe, skins) through the minecraft group
+SupplementaryGroups=minecraft
+WorkingDirectory=/opt/craftmine/api
+EnvironmentFile=/etc/craftmine/api.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node dist/main.js
+Restart=on-failure
+RestartSec=5
+MemoryMax=300M
+
+# Hardening: the API can read the game files but write nothing on disk
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,138 @@
+# Viktorina savollari. "answers" — qabul qilinadigan javoblar (katta-kichik harf va
+# apostrof farqi hisobga olinmaydi). Yangi savol qo'shib, /quiz reload qiling.
+questions:
+  # --- Minecraft ---
+  - q: "Minecraft'da sindirib bo'lmaydigan eng qattiq blok qaysi?"
+    answers: [bedrock]
+  - q: "Nether portali qaysi blokdan quriladi?"
+    answers: [obsidian, obsidiyan]
+  - q: "Creeper qaysi hayvondan qo'rqadi?"
+    answers: [mushuk, cat, ocelot, oselot]
+  - q: "Ender Dragon qaysi dunyoda yashaydi?"
+    answers: [end, the end, end dunyosi]
+  - q: "Netherite olish uchun qaysi rudani qazish kerak?"
+    answers: [ancient debris, qadimgi qoldiq]
+  - q: "Elytra qayerda topiladi?"
+    answers: [end city, end shahri, end ship, end kemasi]
+  - q: "Minecraft'da bitta kun necha daqiqa davom etadi?"
+    answers: ["20", yigirma]
+  - q: "Olmos (diamond) qazish uchun kamida qanday kirka kerak?"
+    answers: [temir, iron, temir kirka, iron pickaxe]
+  - q: "Kunduzi quyosh ostida zombi bilan nima bo'ladi?"
+    answers: [yonadi, yonib ketadi, kuyadi, burns]
+  - q: "Yashil rangli, jimgina kelib portlaydigan mob qaysi?"
+    answers: [creeper, kriper]
+  - q: "Ender Pearl qaysi mobdan tushadi?"
+    answers: [enderman, endermen]
+  - q: "Blaze Rod qaysi dunyoda topiladi?"
+    answers: [nether]
+  - q: "Bitta non yasash uchun nechta bug'doy kerak?"
+    answers: ["3", uch]
+  - q: "Crafting table yasash uchun nechta taxta kerak?"
+    answers: ["4", to'rt]
+  - q: "Mash'ala (torch) ko'mir va yana nimadan yasaladi?"
+    answers: [tayoq, tayoqcha, stick]
+  - q: "Golden apple yasash uchun nechta oltin yombi kerak?"
+    answers: ["8", sakkiz]
+  - q: "Minecraft'ni qaysi kompaniya yaratgan?"
+    answers: [mojang, mojang studios]
+  - q: "Villagerlar bilan savdoda qaysi valyuta ishlatiladi?"
+    answers: [zumrad, emerald, emeraldlar]
+  - q: "Itni qo'lga o'rgatish uchun unga nima berasiz?"
+    answers: [suyak, bone]
+  - q: "Mushukni qo'lga o'rgatish uchun unga nima berasiz?"
+    answers: [baliq, xom baliq, fish, cod, salmon]
+  - q: "Otga minish uchun nima kerak?"
+    answers: [egar, saddle]
+  - q: "Wither chaqirish uchun nechta Wither Skeleton boshi kerak?"
+    answers: ["3", uch]
+  - q: "Ender Dragonni qayta chaqirish uchun nechta End Crystal kerak?"
+    answers: ["4", to'rt]
+  - q: "Netherda oltinni yaxshi ko'radigan mob qaysi?"
+    answers: [piglin, piglinlar]
+  - q: "Temir golem yasash uchun nechta temir blok kerak?"
+    answers: ["4", to'rt]
+  - q: "Qor golemining boshiga nima qo'yiladi?"
+    answers: [qovoq, pumpkin, oyma qovoq, carved pumpkin]
+  - q: "Eng kuchli qilich qaysi materialdan yasaladi?"
+    answers: [netherite, nezerit]
+  - q: "Pistonni yopishqoq (sticky) qilish uchun nima qo'shiladi?"
+    answers: [slime, slime ball, slimeball, shilimshiq]
+  - q: "Eye of Ender yasash uchun Ender Pearl va yana nima kerak?"
+    answers: [blaze powder, blaze kukuni, blaze poroshok]
+  - q: "Nether Star qaysi bossdan tushadi?"
+    answers: [wither, vizer]
+  - q: "Elytra bilan uchishni tezlatish uchun nima ishlatiladi?"
+    answers: [firework, firework rocket, feyerverk, mushak, raketa]
+  - q: "Shulker qaysi dunyoda yashaydi?"
+    answers: [end, the end]
+  - q: "Enderman qaysi suyuqlikdan zarar ko'radi?"
+    answers: [suv, water]
+  - q: "Minecraft'da eng ko'p uchraydigan tosh bloki nima deb ataladi?"
+    answers: [stone, tosh, cobblestone]
+  - q: "Qaysi asbob bilan daraxt tezroq kesiladi?"
+    answers: [bolta, axe]
+  - q: "To'shakni (bed) Netherda ishlatsangiz nima bo'ladi?"
+    answers: [portlaydi, portlash, explodes, portlab ketadi]
+  - q: "Kitob javoni (bookshelf) uchun nechta kitob kerak?"
+    answers: ["3", uch]
+  - q: "Qaysi mob qo'ylardan farqli o'laroq sut beradi?"
+    answers: [sigir, cow, mooshroom]
+  - q: "Redstone signalini uzoqqa uzatish uchun qaysi blok ishlatiladi?"
+    answers: [repeater, redstone repeater, takrorlagich]
+  - q: "Cho'lda topiladigan, suvga tushsa ham tirik qoladigan zombi turi?"
+    answers: [husk, xask]
+
+  # --- Umumiy savollar ---
+  - q: "O'zbekiston poytaxti qaysi shahar?"
+    answers: [toshkent, tashkent]
+  - q: "Bir haftada necha kun bor?"
+    answers: ["7", yetti]
+  - q: "Bir yilda necha oy bor?"
+    answers: ["12", o'n ikki]
+  - q: "Bir sutkada necha soat bor?"
+    answers: ["24", yigirma to'rt]
+  - q: "Bir soatda necha daqiqa bor?"
+    answers: ["60", oltmish]
+  - q: "Dunyodagi eng katta okean qaysi?"
+    answers: [tinch, tinch okeani, pacific]
+  - q: "Quyosh qaysi tomondan chiqadi?"
+    answers: [sharq, sharqdan, east]
+  - q: "Kamalakda nechta rang bor?"
+    answers: ["7", yetti]
+  - q: "Suv necha gradusda qaynaydi (Selsiy)?"
+    answers: ["100", yuz]
+  - q: "Yerning tabiiy yo'ldoshi nima?"
+    answers: [oy, moon]
+  - q: "Yerga eng yaqin yulduz qaysi?"
+    answers: [quyosh, sun]
+  - q: "Qaysi hayvon 'cho'l kemasi' deb ataladi?"
+    answers: [tuya, camel]
+  - q: "Futbol jamoasida maydonda nechta o'yinchi bo'ladi?"
+    answers: ["11", o'n bir]
+  - q: "Eng tez yuguradigan quruqlik hayvoni qaysi?"
+    answers: [gepard, cheetah]
+  - q: "Asalni qaysi hasharot yasaydi?"
+    answers: [ari, asalari, bee]
+  - q: "Ko'k va sariq rang aralashsa qanday rang hosil bo'ladi?"
+    answers: [yashil, green]
+  - q: "Samarqanddagi mashhur uchta madrasali maydon nomi?"
+    answers: [registon]
+  - q: "Quyosh tizimidagi eng katta sayyora qaysi?"
+    answers: [yupiter, jupiter]
+  - q: "Qizil sayyora deb qaysi sayyoraga aytiladi?"
+    answers: [mars]
+  - q: "Odamda nechta yurak bor?"
+    answers: ["1", bitta, bir]
+  - q: "O'rgimchakning nechta oyog'i bor?"
+    answers: ["8", sakkiz]
+  - q: "Eng katta quruqlik hayvoni qaysi?"
+    answers: [fil, elephant]
+  - q: "Qish faslidan keyin qaysi fasl keladi?"
+    answers: [bahor, spring]
+  - q: "Muzni isitsangiz u nimaga aylanadi?"
+    answers: [suv, water]
+  - q: "Ingliz tilida 'olma' qanday aytiladi?"
+    answers: [apple]
+  - q: "Kompyuterning 'miyasi' deb qaysi qismi ataladi?"
+    answers: [protsessor, cpu, processor]

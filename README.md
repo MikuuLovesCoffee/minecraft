@@ -3,7 +3,8 @@
 A Donut-SMP-style Minecraft server (Paper **26.3**) for a small group of friends, set up to run
 safely next to other projects on a shared Ubuntu 24.04 VPS.
 
-**Join:** `mc.mikuuloves.coffee` (Java Edition 26.3 — official launcher or TLauncher)
+**Join:** `mc.mikuuloves.coffee` (Java Edition 26.3 — official launcher or TLauncher) ·
+**Website:** https://mc.mikuuloves.coffee · up to 50 players
 
 If your network blocks port 25565, use `mc.mikuuloves.coffee:2223` (same server).
 
@@ -27,9 +28,17 @@ Every world has **its own inventory**, so creative or kit items can never reach 
 `/sethome` · `/home` (3 homes) · `/spawn` · `/bal` · `/pay` · `/baltop` · `/sell hand` · `/worth` ·
 `/ah` (auction house) · `/warp` · `/msg` · `/sb` (scoreboard on/off, off by default) · `/skin <name>`
 
+### Quiz and starter kit
+- **CraftQuiz** (own plugin, `plugins/craftquiz`): every 5 minutes an Uzbek question in chat — simple math
+  or Minecraft / general knowledge. First correct answer wins $50–200, with a 15% chance of a rare item
+  (diamonds, emeralds, golden apples, totem, enchanted golden apple…). Items are only handed out in
+  survival worlds. Questions live in `questions.yml`; `/quiz start|skip|reload` for admins.
+- **Starter kit** on first join: wooden sword, pickaxe, axe and shovel, food for a day, a golden apple,
+  torches and logs.
+
 ### Anti-cheat and protection
 - **AuthMe**: every player registers a password (the server runs in offline mode for TLauncher players, so names must be protected)
-- **GrimAC** anti-cheat, Paper **anti-xray**
+- **GrimAC** anti-cheat (alerts admins, kicks at high violation levels), Paper **anti-xray**
 - **CombatLog**: logging out during a fight kills you, no teleporting out of combat
 - **Prism**: block logging and rollback · **InventoryRollbackPlus**: restore lost items
 - **WorldGuard**: protected spawn
@@ -42,6 +51,32 @@ ViaVersion · ViaBackwards · ViaRewind
 
 All plugins are downloaded from Modrinth / GitHub with checksum verification.
 
+## Website (`web/` + `api/`)
+
+Next.js 16 front end, NestJS 11 API, PostgreSQL 16.
+
+- **Home** with a 3D scene of the owners (skinview3d with custom diamond / netherite armor), live player count
+- **Guide**: intro, how to join, rules, all commands · **Leaderboard**: money, kills, quiz wins, playtime, blocks mined, deaths
+- **Players**: every player with their 3D skin (SkinsRestorer → custom → Mojang → default) and stats
+- **Help center**: FAQ and support tickets · **Admin panel**: all tickets, replies, status, server overview
+- Uzbek and English
+
+Players log in with their in-game name and the password they `/register`-ed with (AuthMe, read-only).
+The API syncs stats from the game files into Postgres once a minute and never gets RCON access.
+
+Security: httpOnly + SameSite=strict session cookie, login rate limits (Nest + nginx), strict DTO
+validation, parameterised SQL, helmet + CSP/HSTS headers, read-only sandboxed systemd services.
+
+```bash
+# build (Node 20+)
+cd api && npm ci && npm run build
+cd web && npm ci && npm run build      # output: .next/standalone
+# deploy: see deploy/deploy-web.sh (creates user, Postgres db, env file with generated secrets,
+# systemd units, nginx site + Let's Encrypt). Secrets live only in /etc/craftmine/api.env.
+```
+
+Custom skins are drawn by `tools/make_skins.py`.
+
 ## Setup on a fresh server
 
 ```bash
@@ -51,7 +86,10 @@ install -m 755 mcworld /usr/local/bin/mcworld
 ./01-install.sh                       # Java 25, Paper, plugins, systemd unit, first boot
 ./02-configure.sh                     # worlds, permissions, protections, backups, firewall port
 ./03-offline-login-private-world.sh   # TLauncher support + AuthMe, private world, owner rank
+./04-quiz-kit-50-players.sh CraftQuiz-1.0.0.jar   # quiz plugin, starter kit, 50 slots, Grim kicks
 ```
+
+Build the quiz plugin with `cd plugins/craftquiz && gradle build` (JDK 25).
 
 Edit `OWNER=` at the top of `03-offline-login-private-world.sh` first. The owner's AuthMe
 password is generated on the server and saved to `/root/mc-owner-password.txt` (never in git).
