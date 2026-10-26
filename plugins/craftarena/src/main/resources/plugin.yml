@@ -7,7 +7,8 @@ author: MikuuLovesCoffee
 softdepend: [Multiverse-Core, Essentials]
 commands:
   join:
-    description: Join the arena queue.
+    description: Join the arena queue, or /join <player> to challenge someone (they accept with /join <you>).
+    usage: /join [player]
   leave:
     description: Leave the arena queue or give up the current match.
   ready:

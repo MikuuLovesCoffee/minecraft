@@ -12,7 +12,7 @@ an /warp <name> warp, and (if --private) is locked to players you `allow`.
 import hashlib, subprocess, sys, time, uuid, yaml, os, pwd
 
 S = "/opt/minecraft/server"
-PUBLIC_PERMS = ["mv.access.{w}", "essentials.warps.{w}"]
+PUBLIC_PERMS = ["multiverse.access.{w}", "essentials.warps.{w}"]  # Multiverse 5 checks multiverse.access.<world>
 
 
 def mc(*cmd):

@@ -43,11 +43,10 @@ import org.joml.Vector3f;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -80,7 +79,9 @@ public final class CraftArena extends JavaPlugin implements Listener {
     }
 
     private final Map<String, Fighter> slots = new HashMap<>(); // "a" / "b"
-    private final Deque<UUID> queue = new ArrayDeque<>();
+    // each entry is one player, or two players who challenged each other (they fight each other)
+    private final LinkedList<List<UUID>> queue = new LinkedList<>();
+    private final Map<UUID, UUID> invites = new HashMap<>(); // challenger -> challenged
     private final Map<String, Integer> caps = new HashMap<>();
     private Phase phase = Phase.SETUP;
     private int round;
@@ -189,30 +190,117 @@ public final class CraftArena extends JavaPlugin implements Listener {
         updateBoard();
     }
 
+    private boolean queued(UUID id) {
+        return queue.stream().anyMatch(e -> e.contains(id));
+    }
+
+    /** Takes a player out of the queue; if they were in a pair, their partner stays queued alone. */
+    private boolean dequeue(Player p) {
+        UUID id = p.getUniqueId();
+        for (int i = 0; i < queue.size(); i++) {
+            List<UUID> entry = queue.get(i);
+            if (!entry.contains(id)) continue;
+            List<UUID> rest = entry.stream().filter(u -> !u.equals(id)).toList();
+            if (rest.isEmpty()) {
+                queue.remove(i);
+            } else {
+                queue.set(i, rest);
+                tell(Bukkit.getPlayer(rest.get(0)), p.getName() + " navbatdan chiqdi — siz yolg'iz navbatdasiz.", NamedTextColor.GRAY);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private int queuedPlayers() {
+        return queue.stream().mapToInt(List::size).sum();
+    }
+
     private void join(Player p) {
-        if (fighter(p) != null || queue.contains(p.getUniqueId())) {
+        if (fighter(p) != null || queued(p.getUniqueId())) {
             tell(p, "Siz allaqachon navbatdasiz yoki jangdasiz.", NamedTextColor.GRAY);
             return;
         }
-        queue.addLast(p.getUniqueId());
-        tell(p, "Navbatga yozildingiz. O'rningiz: " + queue.size(), NamedTextColor.GREEN);
+        queue.addLast(List.of(p.getUniqueId()));
+        tell(p, "Navbatga yozildingiz. Oldingizda: " + (queuedPlayers() - 1) + " kishi", NamedTextColor.GREEN);
         fillSlots();
     }
 
-    /** Puts the next players from the queue into empty cells. */
+    /** /join <name>: challenge a player; when they /join you back, you two queue as a pair and fight each other. */
+    private void challenge(Player p, String name) {
+        Player target = Bukkit.getPlayerExact(name);
+        if (target == null || target.equals(p)) {
+            tell(p, "Bunday o'yinchi onlayn emas.", NamedTextColor.RED);
+            return;
+        }
+        if (fighter(p) != null || fighter(target) != null) {
+            tell(p, "Jangdagi o'yinchini chaqirib bo'lmaydi.", NamedTextColor.GRAY);
+            return;
+        }
+        if (p.getUniqueId().equals(invites.get(target.getUniqueId()))) {
+            invites.remove(target.getUniqueId());
+            queue.removeIf(e -> e.contains(p.getUniqueId()) || e.contains(target.getUniqueId()));
+            queue.addLast(List.of(target.getUniqueId(), p.getUniqueId()));
+            tell(p, target.getName() + " bilan jang navbatga qo'shildi!", NamedTextColor.GREEN);
+            tell(target, p.getName() + " chaqiruvni qabul qildi! Navbatdasiz.", NamedTextColor.GREEN);
+            fillSlots();
+            return;
+        }
+        invites.put(p.getUniqueId(), target.getUniqueId());
+        tell(p, target.getName() + " jangga chaqirildi. U /join " + p.getName() + " yozsa, navbatga tushasiz.", NamedTextColor.YELLOW);
+        tell(target, p.getName() + " sizni arenada jangga chaqirdi! Qabul qilish: /arena keyin /join " + p.getName(), NamedTextColor.GOLD);
+    }
+
+    /** Drops queue entries whose players went offline or left the arena; a broken pair keeps the one still here. */
+    private List<UUID> nextEntry() {
+        while (!queue.isEmpty()) {
+            List<UUID> head = queue.peekFirst();
+            List<UUID> here = head.stream().filter(id -> { Player p = Bukkit.getPlayer(id); return p != null && inArena(p); }).toList();
+            if (here.size() == head.size()) return head;
+            queue.pollFirst();
+            if (!here.isEmpty()) {
+                queue.addFirst(here);
+                return here;
+            }
+        }
+        return null;
+    }
+
+    private void seat(UUID id, String cell) {
+        Fighter f = new Fighter(id, cell);
+        slots.put(cell, f);
+        Player p = f.player();
+        announce((p != null ? p.getName() : "?") + " arenaga chiqdi!", NamedTextColor.GOLD);
+        startPrep(f);
+    }
+
+    /** Puts the next players from the queue into the cells. A waiting pair takes both cells once no fight is on. */
     private void fillSlots() {
-        for (String cell : List.of("a", "b")) {
-            if (slots.containsKey(cell)) continue;
-            UUID next;
-            while ((next = queue.pollFirst()) != null) {
-                Player p = Bukkit.getPlayer(next);
-                if (p != null && inArena(p)) {
-                    Fighter f = new Fighter(next, cell);
-                    slots.put(cell, f);
-                    announce(p.getName() + " arenaga chiqdi!", NamedTextColor.GOLD);
-                    startPrep(f);
+        if (phase != Phase.FIGHT) {
+            List<UUID> head;
+            while ((head = nextEntry()) != null) {
+                if (head.size() == 2) {
+                    // anyone sitting in a cell without a fight goes back to the front of the queue
+                    for (Fighter f : new ArrayList<>(slots.values())) {
+                        stopPrep(f);
+                        slots.remove(f.cell);
+                        queue.add(1, List.of(f.id));
+                        Player p = f.player();
+                        if (p != null) {
+                            tell(p, "Do'stlar jangi boshlanmoqda — siz navbat boshidasiz.", NamedTextColor.YELLOW);
+                            toSpectator(p);
+                        }
+                    }
+                    queue.pollFirst();
+                    round = 0;
+                    seat(head.get(0), "a");
+                    seat(head.get(1), "b");
                     break;
                 }
+                String cell = !slots.containsKey("a") ? "a" : !slots.containsKey("b") ? "b" : null;
+                if (cell == null) break;
+                queue.pollFirst();
+                seat(head.get(0), cell);
             }
         }
         updateBoard();
@@ -406,7 +494,7 @@ public final class CraftArena extends JavaPlugin implements Listener {
                     .append(Component.text("\n" + status(a, b), phase == Phase.FIGHT ? NamedTextColor.RED : NamedTextColor.YELLOW)
                             .decoration(TextDecoration.BOLD, false));
         }
-        text = text.append(Component.text("\nNavbat: " + queue.size() + " · birinchi " + getConfig().getInt("rounds-to-win", 3)
+        text = text.append(Component.text("\nNavbat: " + queuedPlayers() + " · birinchi " + getConfig().getInt("rounds-to-win", 3)
                 + " ochko yutadi", NamedTextColor.DARK_GRAY).decoration(TextDecoration.BOLD, false));
         board.text(text);
         itemA.setItemStack(a != null ? weapon(a.id) : null);
@@ -496,7 +584,8 @@ public final class CraftArena extends JavaPlugin implements Listener {
     }
 
     private void leaveArena(Player p) {
-        queue.remove(p.getUniqueId());
+        dequeue(p);
+        invites.remove(p.getUniqueId());
         Fighter f = fighter(p);
         if (f != null) forfeit(f);
         updateBoard();
@@ -571,13 +660,16 @@ public final class CraftArena extends JavaPlugin implements Listener {
         }
         Fighter f = fighter(p);
         switch (command.getName()) {
-            case "join" -> join(p);
+            case "join" -> {
+                if (args.length > 0) challenge(p, args[0]);
+                else join(p);
+            }
             case "leave" -> {
                 if (f != null) {
                     tell(p, "Jangdan chiqdingiz.", NamedTextColor.GRAY);
                     forfeit(f);
                     toSpectator(p);
-                } else if (queue.remove(p.getUniqueId())) {
+                } else if (dequeue(p)) {
                     tell(p, "Navbatdan chiqdingiz.", NamedTextColor.GRAY);
                     updateBoard();
                 }

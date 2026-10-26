@@ -15,7 +15,7 @@ echo "owner offline uuid: $OWNER_UUID"
 log "world access locks"
 c mv config enforce-access true
 for w in world world_nether world_the_end creative arena simple; do
-  mcctl lp group default permission set mv.access.$w true >/dev/null
+  mcctl lp group default permission set multiverse.access.$w true >/dev/null
 done
 for w in creative arena simple; do mcctl lp group default permission set essentials.warps.$w true >/dev/null; done
 sed -i 's/^per-warp-permission: false/per-warp-permission: true/' $P/Essentials/config.yml
