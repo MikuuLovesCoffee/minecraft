@@ -14,10 +14,11 @@ Older and newer clients can join too (ViaVersion, ViaBackwards and ViaRewind, fr
 
 | World | How to get there | Rules |
 |---|---|---|
-| **SMP** (main) | `/spawn`, `/rtp` | Survival, PvP on, protected spawn (40 blocks), economy |
-| **Creative** | `/creative` | Flat, creative mode, PvP on, no TNT/fire/lava |
-| **Arena** | `/arena` or `/pvp` | Flat PvP arena, adventure mode, `/kit pvp`, keep inventory |
-| **Simple** | `/simple` | Plain survival, PvP on |
+| **SMP** (main) | `/spawn`, `/rtp` | Survival, PvP on, spawn castle safe zone, economy, land claims. `/rtp` always lands here |
+| **Kit arena** | `/arena` | Colosseum. 2 min in creative to pick any gear, then adventure-mode fight; respawn with that loadout, no drops |
+| **PvP pit** | `/pvp` | Walled pit north of the castle (SMP world): fight with your own items, they drop on death |
+| **Creative** | `/creative` | Flat building world, creative mode, claims protect builds, no TNT/fire/lava |
+| **Simple** | `/simple` | Separate fresh vanilla survival (own inventory, no economy), spawn on plains |
 | **Private** | `/warp private` | Locked — only players added with `mcworld allow`, PvP on |
 
 Every world has **its own inventory**, so creative or kit items can never reach survival.
@@ -42,6 +43,20 @@ towers, fountain plaza, four cottages, gardens, welcome signs) built by `tools/s
 (`tools/castle_preview.py` renders an isometric preview). The castle area is a WorldGuard safe zone:
 nobody can be hurt or break anything there. `/rtp` always goes to the SMP world, 300–2500 blocks out.
 Players log in at the castle (AuthMe) and are then sent back to where they logged out.
+
+### Land claims (GriefPrevention)
+Players claim land with a golden shovel (in the starter kit) or `/claim`: inside a claim others can walk
+around but can't break, place or open anything unless trusted (`/trust`, `/containertrust`, `/accesstrust`).
+600 claim blocks to start, +300 per hour played. Admins can make admin claims (`/adminclaims` then the
+shovel), give claim blocks (`/adjustbonusclaimblocks <player> <amount>`) and hand claims over
+(`/transferclaim <player>`). Claims work in SMP, Nether, Simple, Creative and Private; not in the arena.
+
+### Kit arena (CraftArena)
+Own plugin (`plugins/craftarena`): entering the arena gives 2 minutes of creative mode with the last loadout
+pre-filled (`/ready` to start early, `/loadout` to pick again). Then gear is checked (no spawn eggs/TNT/
+crystals/mace…, max 1 totem, 2 god apples), saved, and the player fights in adventure mode. Nothing drops;
+every respawn restores the loadout. Arena blocks can't be broken, placed or used (WorldGuard).
+Structures: `tools/arenas_build.py` (colosseum + PvP pit), shared RCON helpers in `tools/mcbuild.py`.
 
 ### Anti-cheat and protection
 - **AuthMe**: every player registers a password (the server runs in offline mode for TLauncher players, so names must be protected)
@@ -100,6 +115,7 @@ install -m 755 mcworld /usr/local/bin/mcworld
 ./03-offline-login-private-world.sh   # TLauncher support + AuthMe, private world, owner rank
 ./04-quiz-kit-50-players.sh CraftQuiz-1.0.0.jar   # quiz plugin, starter kit, 50 slots, Grim kicks
 ./05-spawn-castle-rtp-mods.sh ../tools/spawn_castle.py CraftGuard-1.0.0.jar   # castle, safe spawn, /rtp, mod blocker
+./06-arenas-claims-simple.sh ../tools CraftArena-1.0.0.jar   # kit arena, PvP pit, land claims, green Simple spawn
 ```
 
 Build the plugins with `cd plugins/craftquiz && gradle build` and `cd plugins/craftskins && gradle build` (JDK 25).

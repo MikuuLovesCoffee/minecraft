@@ -1,0 +1,12 @@
+name: CraftArena
+version: '${version}'
+main: coffee.mikuuloves.craftarena.CraftArena
+api-version: '26.3'
+description: Kit arena - 2 minutes to pick any gear in creative, then fight and respawn with that loadout.
+author: MikuuLovesCoffee
+softdepend: [Multiverse-Core, Essentials]
+commands:
+  ready:
+    description: End the arena preparation early and start fighting.
+  loadout:
+    description: Pick your arena gear again (restarts the 2 minute preparation).

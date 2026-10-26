@@ -4,8 +4,6 @@ Centre (0, 0), ground at y=69, floor y=70. Castle walls at +-30, flattened grass
 Run on the server:  python3 spawn_castle.py --run      (or without --run to just print the commands)
 """
 import random
-import socket
-import struct
 import sys
 
 G = 69          # ground (top block) height
@@ -171,31 +169,9 @@ for x, msg in zip((-1, 0, 1), lines):
 c(f"setworldspawn 0 {G + 1} 16 180")
 
 
-def run():
-    props = dict(l.strip().split("=", 1) for l in open("/opt/minecraft/server/server.properties") if "=" in l and not l.startswith("#"))
-    s = socket.create_connection(("127.0.0.1", int(props["rcon.port"])), timeout=60)
-
-    def pkt(i, t, body):
-        d = struct.pack("<ii", i, t) + body.encode() + b"\0\0"
-        s.sendall(struct.pack("<i", len(d)) + d)
-        n = struct.unpack("<i", s.recv(4))[0]
-        r = b""
-        while len(r) < n:
-            r += s.recv(n - len(r))
-        return r[8:-2].decode(errors="replace")
-
-    pkt(1, 3, props["rcon.password"])
-    errors = 0
-    for i, cmd in enumerate(cmds):
-        out = pkt(2, 2, cmd)
-        if any(w in out for w in ("Unknown", "Incorrect", "Expected", "Invalid", "Could not", "too many", "not loaded")):
-            errors += 1
-            print(f"[{i}] {cmd[34:110]} -> {out[:160]}")
-    print(f"{len(cmds)} commands, {errors} errors")
-
-
 if __name__ == "__main__":
     if "--run" in sys.argv:
-        run()
+        import mcbuild
+        mcbuild.run(cmds)
     else:
         print("\n".join(cmds))

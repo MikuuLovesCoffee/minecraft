@@ -1,0 +1,20 @@
+# The kit arena world
+world: arena
+# Seconds of creative-mode preparation to pick gear
+prep-seconds: 120
+# Players (re)spawn at a random spot within this radius of the centre
+center: {x: 0.5, y: -60, z: 0.5}
+spawn-radius: 22
+
+# Removed from loadouts (prefix / suffix match on the item id)
+banned: [_SPAWN_EGG, BARRIER, LIGHT, STRUCTURE_, JIGSAW, DEBUG_STICK, COMMAND_BLOCK, KNOWLEDGE_BOOK,
+         BEDROCK, END_PORTAL_FRAME, SPAWNER, TRIAL_SPAWNER, VAULT, TNT, END_CRYSTAL, RESPAWN_ANCHOR,
+         LAVA_BUCKET, WATER_BUCKET, POWDER_SNOW_BUCKET, MACE]
+
+# Maximum total amount per item in a loadout
+caps:
+  TOTEM_OF_UNDYING: 1
+  ENCHANTED_GOLDEN_APPLE: 2
+  GOLDEN_APPLE: 8
+  ENDER_PEARL: 8
+  WIND_CHARGE: 16

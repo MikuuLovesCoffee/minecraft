@@ -6,8 +6,8 @@ import { ServerAddress } from '@/components/ServerAddress';
 import { money } from '@/lib/format';
 import { api, dict, type Player } from '@/lib/server';
 
-const WORLD_COLORS = ['bg-grass', 'bg-diamond', 'bg-pink', 'bg-gold'];
-const FEATURE_ICONS = ['❓', '🪓', '💰', '🛡️', '🏠', '🎨'];
+const WORLD_COLORS = ['bg-grass', 'bg-pink', 'bg-[#e8455a]', 'bg-diamond', 'bg-gold'];
+const FEATURE_ICONS = ['❓', '🪓', '💰', '🛡️', '🏠', '⛏️'];
 
 export default async function Home() {
   const t = await dict();
@@ -54,7 +54,7 @@ export default async function Home() {
 
       {/* Worlds */}
       <Section title={t.home.worldsTitle}>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {t.home.worlds.map(([name, body, cmd], i) => (
             <Card key={name} className="flex flex-col">
               <div className={`mb-4 h-2 w-12 ${WORLD_COLORS[i]}`} />

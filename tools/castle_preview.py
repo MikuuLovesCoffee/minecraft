@@ -23,9 +23,9 @@ COLORS = {
 FLOWER = (230, 80, 120)
 
 
-def simulate():
+def simulate(cmds=None, min_y=62):
     world = {}
-    for cmd in spawn_castle.cmds:
+    for cmd in (cmds if cmds is not None else spawn_castle.cmds):
         body = cmd.split(" run ", 1)[1]
         m = re.match(r"fill (-?\d+) (-?\d+) (-?\d+) (-?\d+) (-?\d+) (-?\d+) ([a-z_]+)\S*\s*(hollow)?", body)
         if m:
@@ -38,7 +38,7 @@ def simulate():
                         b = "air" if hollow and not edge else block
                         if b == "air":
                             world.pop((x, y, z), None)
-                        elif y >= 62:  # only what's visible near the surface
+                        elif y >= min_y:  # only what's visible near the surface
                             world[(x, y, z)] = b
             continue
         m = re.match(r"setblock (-?\d+) (-?\d+) (-?\d+) ([a-z_]+)", body)
@@ -61,7 +61,7 @@ def simulate():
     return world
 
 
-def render(world, out, s=5):
+def render(world, out, s=5, base_y=69):
     W, H = 1300, 900
     img = Image.new("RGB", (W, H), (150, 190, 235))
     d = ImageDraw.Draw(img)
@@ -71,7 +71,7 @@ def render(world, out, s=5):
         b = world[(x, y, z)]
         col = (60, 140, 50) if b == "leaves" else COLORS.get(b, FLOWER)
         sx = ox + (x - z) * s
-        sy = oy + (x + z) * s // 2 - (y - 69) * s
+        sy = oy + (x + z) * s // 2 - (y - base_y) * s
         top = [(sx, sy - s // 2), (sx + s, sy), (sx, sy + s // 2), (sx - s, sy)]
         left = [(sx - s, sy), (sx, sy + s // 2), (sx, sy + s // 2 + s), (sx - s, sy + s)]
         right = [(sx + s, sy), (sx, sy + s // 2), (sx, sy + s // 2 + s), (sx + s, sy + s)]
