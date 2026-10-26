@@ -64,11 +64,13 @@ export class SkinsService {
 
   private async fromSkinsRestorer(name: string): Promise<Skin | null> {
     const player = this.readJson(join(this.srDir, 'players', `${this.offlineUuid(name)}.player`));
+    // players/<uuid>.player: {"skinIdentifier":{"identifier":"devil","type":"CUSTOM"}}
     const id = player?.skinIdentifier ?? player;
-    if (!id?.identifier || !id?.skinType) return null;
-    const suffix = SR_SUFFIX[String(id.skinType).toUpperCase()];
+    const type = String(id?.type ?? id?.skinType ?? '').toUpperCase();
+    if (!id?.identifier || !type) return null;
+    const suffix = SR_SUFFIX[type];
     if (!suffix) return null;
-    const file = id.skinType === 'URL' ? `${id.identifier}_${id.skinVariant ?? 'CLASSIC'}` : id.identifier;
+    const file = type === 'URL' ? `${id.identifier}_${id.skinVariant ?? 'CLASSIC'}` : id.identifier;
     const data = this.readJson(join(this.srDir, 'skins', `${file}.${suffix}`));
     return data?.value ? this.fromTextureValue(data.value) : null;
   }

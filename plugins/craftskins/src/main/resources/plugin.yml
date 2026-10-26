@@ -1,0 +1,7 @@
+name: CraftSkins
+version: '${version}'
+main: coffee.mikuuloves.craftskins.CraftSkins
+api-version: '26.3'
+description: Forces fixed SkinsRestorer skins on chosen players and locks /skin for them.
+author: MikuuLovesCoffee
+depend: [SkinsRestorer]

@@ -1,0 +1,5 @@
+# Player name -> SkinsRestorer custom skin name (created with /sr createcustom <name> <url>).
+# These players always wear this skin and can't change it with /skin.
+locked-skins:
+  MikuuLovesCoffee: techno
+  xxbabyxv: devil

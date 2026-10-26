@@ -92,7 +92,9 @@ install -m 755 mcworld /usr/local/bin/mcworld
 ./04-quiz-kit-50-players.sh CraftQuiz-1.0.0.jar   # quiz plugin, starter kit, 50 slots, Grim kicks
 ```
 
-Build the quiz plugin with `cd plugins/craftquiz && gradle build` (JDK 25).
+Build the plugins with `cd plugins/craftquiz && gradle build` and `cd plugins/craftskins && gradle build` (JDK 25).
+**CraftSkins** keeps a fixed skin on chosen players (config `locked-skins`, default: MikuuLovesCoffee → `techno`,
+xxbabyxv → `devil`): applied on every join, and `/skin` is blocked for them.
 
 Edit `OWNER=` at the top of `03-offline-login-private-world.sh` first. The owner's AuthMe
 password is generated on the server and saved to `/root/mc-owner-password.txt` (never in git).
