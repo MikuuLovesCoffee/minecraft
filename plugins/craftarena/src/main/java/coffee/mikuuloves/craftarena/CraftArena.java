@@ -369,7 +369,10 @@ public final class CraftArena extends JavaPlugin implements Listener {
     }
 
     private void removeBoard() {
-        for (Entity e : List.of(board, itemA, itemB).stream().filter(java.util.Objects::nonNull).toList()) e.remove();
+        // List.of() rejects nulls, and these are null until the board is first spawned
+        for (Entity e : new Entity[] {board, itemA, itemB}) {
+            if (e != null) e.remove();
+        }
         board = null;
         itemA = itemB = null;
     }
