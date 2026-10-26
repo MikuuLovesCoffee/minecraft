@@ -17,3 +17,5 @@ dist/
 build/
 .gradle/
 *.tsbuildinfo
+__pycache__/
+*.pyc
