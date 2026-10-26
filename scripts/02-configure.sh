@@ -11,10 +11,10 @@ log "worlds"
 c mv create creative NORMAL --world-type FLAT --no-structures
 c mv create arena NORMAL --world-type FLAT --no-structures
 c mv create simple NORMAL
-for kv in "creative gamemode creative" "creative pvp false" "creative difficulty peaceful" "creative hunger false" \
+for kv in "creative gamemode creative" "creative pvp true" "creative difficulty peaceful" "creative hunger false" \
           "creative allow-flight true" "creative portal-form none" \
           "arena gamemode adventure" "arena pvp true" "arena difficulty peaceful" "arena hunger false" "arena portal-form none" \
-          "simple pvp false" "world pvp true" "world_nether pvp true" "world_the_end pvp true"; do
+          "simple pvp true" "world pvp true" "world_nether pvp true" "world_the_end pvp true"; do
   set -- $kv; c mv modify "$1" set "$2" "$3"
 done
 for g in "keep_inventory true arena" "spawn_mobs false creative" "spawn_mobs false arena" "advance_time false creative" \

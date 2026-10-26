@@ -10,10 +10,10 @@ safely next to other projects on a shared Ubuntu 24.04 VPS.
 | World | How to get there | Rules |
 |---|---|---|
 | **SMP** (main) | `/spawn`, `/rtp` | Survival, PvP on, protected spawn (40 blocks), economy |
-| **Creative** | `/creative` | Flat, creative mode, no PvP, no TNT/fire/lava |
+| **Creative** | `/creative` | Flat, creative mode, PvP on, no TNT/fire/lava |
 | **Arena** | `/arena` or `/pvp` | Flat PvP arena, adventure mode, `/kit pvp`, keep inventory |
-| **Simple** | `/simple` | Plain survival, no PvP |
-| **Private** | `/warp private` | Locked — only players added with `mcworld allow` |
+| **Simple** | `/simple` | Plain survival, PvP on |
+| **Private** | `/warp private` | Locked — only players added with `mcworld allow`, PvP on |
 
 Every world has **its own inventory**, so creative or kit items can never reach survival.
 `/sell`, `/ah` and `/rtp` only work in the survival worlds.

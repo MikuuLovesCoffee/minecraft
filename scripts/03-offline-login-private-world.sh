@@ -22,7 +22,7 @@ sed -i 's/^per-warp-permission: false/per-warp-permission: true/' $P/Essentials/
 grep -n "^per-warp-permission" $P/Essentials/config.yml
 
 log "private world"
-/usr/local/bin/mcworld create private normal --private --no-pvp
+/usr/local/bin/mcworld create private normal --private
 
 log "owner rank"
 mcctl lp user $OWNER_UUID parent set owner >/dev/null
