@@ -40,7 +40,7 @@ def get(u,raw=False):
 ld=urllib.parse.quote('["paper","bukkit","spigot"]')
 mods=["luckperms","vaultunlocked","multiverse-core","multiverse-inventories","worldedit","worldguard",
       "prism","inventoryrollbackplus","grimac","zauctionhouse","zmenu","simple-combatlog","placeholderapi","chunky",
-      "donutscoreboard","nbtapi"]
+      "donutscoreboard","nbtapi","viaversion","viabackwards","viarewind"]
 for s in mods:
   vs=get(f"https://api.modrinth.com/v2/project/{s}/version?loaders={ld}")
   ok=[v for v in vs if "26.3" in v["game_versions"] and v["version_type"]=="release"] or \

@@ -7,6 +7,8 @@ safely next to other projects on a shared Ubuntu 24.04 VPS.
 
 If your network blocks port 25565, use `mc.mikuuloves.coffee:2223` (same server).
 
+Older and newer clients can join too (ViaVersion, ViaBackwards and ViaRewind, from 1.7 up to 26.3).
+
 ## What's on the server
 
 | World | How to get there | Rules |
@@ -35,7 +37,8 @@ Every world has **its own inventory**, so creative or kit items can never reach 
 ## Plugins
 Paper 26.3 · EssentialsX (+Chat, Spawn) · LuckPerms · VaultUnlocked · Multiverse-Core / Inventories ·
 WorldEdit · WorldGuard · GrimAC · Prism (+NBTAPI) · InventoryRollbackPlus · zAuctionHouse (+zMenu) ·
-CombatLog · DonutScoreboard · PlaceholderAPI · Chunky · AuthMe Reloaded · SkinsRestorer
+CombatLog · DonutScoreboard · PlaceholderAPI · Chunky · AuthMe Reloaded · SkinsRestorer ·
+ViaVersion · ViaBackwards · ViaRewind
 
 All plugins are downloaded from Modrinth / GitHub with checksum verification.
 
