@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useI18n } from './I18nProvider';
 import { PlayerHead } from './PlayerHead';
 import { useSession } from './useSession';
@@ -13,6 +13,9 @@ export function Nav() {
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  // Close the mobile menu after any navigation or login/logout
+  useEffect(() => setOpen(false), [path, user]);
 
   const links = [
     ['/', t.nav.home],
@@ -25,6 +28,7 @@ export function Nav() {
 
   const switchLang = () => {
     document.cookie = `lang=${lang === 'uz' ? 'en' : 'uz'}; path=/; max-age=31536000; samesite=lax`;
+    setOpen(false);
     router.refresh();
   };
 
@@ -68,7 +72,7 @@ export function Nav() {
               </button>
             </div>
           ) : (
-            <Link href="/help#login" className="btn-pixel ml-1 bg-grass px-3 py-1.5 text-sm text-white">
+            <Link href="/help#login" onClick={() => setOpen(false)} className="btn-pixel ml-1 self-start bg-grass px-3 py-1.5 text-sm text-white md:self-auto">
               {t.nav.login}
             </Link>
           )}
