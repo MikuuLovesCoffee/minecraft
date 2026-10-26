@@ -30,8 +30,22 @@ for i in range(4):
 A.ring(0, 0, 39.5, 41.5, F, F + 14, "stone_bricks")
 for deg in range(0, 360, 20):
     a = math.radians(deg)
-    A.setb(round(30.5 * math.cos(a)), F + 8, round(30.5 * math.sin(a)), "lantern")
     A.setb(round(40.5 * math.cos(a)), F + 15, round(40.5 * math.sin(a)), "lantern")
+    A.setb(round(32.5 * math.cos(a)), F + 8, round(32.5 * math.sin(a)), "lantern")
+# invisible wall above the arena wall: spectators can't jump in or shoot into the fight
+A.ring(0, 0, 29.5, 31.5, F + 8, F + 26, "barrier")
+A.ring(0, 0, 0, 31.5, F + 27, F + 27, "barrier")
+
+# two gladiator cells (east = a, west = b) under the stands, with iron-bar gates in the arena wall
+for s in (1, -1):
+    x_in, x_out = 32 * s, 38 * s
+    A.fill(x_in, F, -3, x_out, F + 5, 3, "stone_bricks", "hollow")
+    A.fill(x_in + s, F, -2, x_out - s, F, 2, "polished_andesite")
+    A.fill(31 * s, F + 1, -1, 32 * s, F + 3, 1, "air")       # doorway through wall and cell
+    A.fill(30 * s, F + 1, -1, 30 * s, F + 3, 1, "iron_bars")  # the gate (opened by the plugin)
+    for z in (-2, 2):
+        A.setb(36 * s, F + 3, z, f"lantern")
+    A.setb(37 * s, F + 1, 0, "chiseled_stone_bricks")
 # cover: 6 pillars and 4 low walls
 for deg in range(0, 360, 60):
     a = math.radians(deg + 30)

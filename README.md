@@ -15,7 +15,7 @@ Older and newer clients can join too (ViaVersion, ViaBackwards and ViaRewind, fr
 | World | How to get there | Rules |
 |---|---|---|
 | **SMP** (main) | `/spawn`, `/rtp` | Survival, PvP on, spawn castle safe zone, economy, land claims. `/rtp` always lands here |
-| **Kit arena** | `/arena` | Colosseum. 2 min in creative to pick any gear, then adventure-mode fight; respawn with that loadout, no drops |
+| **Gladiator arena** | `/arena` | Colosseum with stands, two cells with iron gates and a floating scoreboard (see below) |
 | **PvP pit** | `/pvp` | Walled pit north of the castle (SMP world): fight with your own items, they drop on death |
 | **Creative** | `/creative` | Flat building world, creative mode, claims protect builds, no TNT/fire/lava |
 | **Simple** | `/simple` | Separate fresh vanilla survival (own inventory, no economy), spawn on plains |
@@ -42,7 +42,9 @@ New players, logins and `/spawn` arrive in a stone castle at the world centre (w
 towers, fountain plaza, four cottages, gardens, welcome signs) built by `tools/spawn_castle.py`
 (`tools/castle_preview.py` renders an isometric preview). The castle area is a WorldGuard safe zone:
 nobody can be hurt or break anything there. `/rtp` always goes to the SMP world, 300–2500 blocks out.
-Players log in at the castle (AuthMe) and are then sent back to where they logged out.
+Players log in at the castle (AuthMe) and are then sent back to where they logged out. New players first
+type a short `/captcha <code>`, then `/register` (2 minutes each). After 10 wrong passwords the IP is
+temporarily banned. Admins don't bypass spawn/arena protection unless they toggle `/rg bypass`.
 
 ### Land claims (GriefPrevention)
 Players claim land with a golden shovel (in the starter kit) or `/claim`: inside a claim others can walk
@@ -51,11 +53,15 @@ around but can't break, place or open anything unless trusted (`/trust`, `/conta
 shovel), give claim blocks (`/adjustbonusclaimblocks <player> <amount>`) and hand claims over
 (`/transferclaim <player>`). Claims work in SMP, Nether, Simple, Creative and Private; not in the arena.
 
-### Kit arena (CraftArena)
-Own plugin (`plugins/craftarena`): entering the arena gives 2 minutes of creative mode with the last loadout
-pre-filled (`/ready` to start early, `/loadout` to pick again). Then gear is checked (no spawn eggs/TNT/
-crystals/mace…, max 1 totem, 2 god apples), saved, and the player fights in adventure mode. Nothing drops;
-every respawn restores the loadout. Arena blocks can't be broken, placed or used (WorldGuard).
+### Gladiator arena (CraftArena)
+Own plugin (`plugins/craftarena`). `/arena` puts you in the stands (barrier walls: spectators can't jump in
+or shoot). `/join` queues you; the first two go to the east/west cells and get 2 minutes of creative to pick
+any gear (all weapons allowed; max 1 totem, 2 god apples; no spawn eggs/TNT/lava). Both type `/ready`, the
+iron gates open and the round starts. A death is a point for the other fighter; both go back to their cells
+with their loadout, the gates close and both `/ready` again. First to 3 wins; the champion stays for the next
+challenger. A floating scoreboard above the arena shows both names, the score and each fighter's weapon,
+spinning. `/loadout` re-picks gear between rounds, `/leave` gives up. Nothing drops; arena blocks can't be
+broken, placed or used (WorldGuard).
 Structures: `tools/arenas_build.py` (colosseum + PvP pit), shared RCON helpers in `tools/mcbuild.py`.
 
 ### Anti-cheat and protection
@@ -115,7 +121,8 @@ install -m 755 mcworld /usr/local/bin/mcworld
 ./03-offline-login-private-world.sh   # TLauncher support + AuthMe, private world, owner rank
 ./04-quiz-kit-50-players.sh CraftQuiz-1.0.0.jar   # quiz plugin, starter kit, 50 slots, Grim kicks
 ./05-spawn-castle-rtp-mods.sh ../tools/spawn_castle.py CraftGuard-1.0.0.jar   # castle, safe spawn, /rtp, mod blocker
-./06-arenas-claims-simple.sh ../tools CraftArena-1.0.0.jar   # kit arena, PvP pit, land claims, green Simple spawn
+./06-arenas-claims-simple.sh ../tools CraftArena-1.0.0.jar   # arena, PvP pit, land claims, green Simple spawn
+./07-spawn-fix-login-gladiator.sh ../tools CraftArena-1.0.0.jar   # spawn fix, login captcha, gladiator arena
 ```
 
 Build the plugins with `cd plugins/craftquiz && gradle build` and `cd plugins/craftskins && gradle build` (JDK 25).

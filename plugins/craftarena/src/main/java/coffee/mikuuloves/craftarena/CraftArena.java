@@ -6,6 +6,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -13,14 +14,19 @@ import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -30,56 +36,94 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Transformation;
+import org.joml.AxisAngle4f;
+import org.joml.Vector3f;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Kit arena: on entering, players get creative mode for a while to pick any gear; then they fight in
- * adventure mode and always respawn with the loadout they picked. Nothing drops on death.
+ * Gladiator duel arena. Spectators watch from the stands; the first two players in the /join queue go to the
+ * two cells, pick gear in creative (2 minutes, or /ready), and fight when both are ready and the gates open.
+ * Each death is a point; the first to rounds-to-win takes the match and stays for the next challenger.
  */
 public final class CraftArena extends JavaPlugin implements Listener {
 
-    private record Prep(BukkitTask task, BossBar bar) {}
+    private enum Phase { SETUP, FIGHT }
 
-    private final Map<UUID, Prep> preparing = new HashMap<>();
+    private static final class Fighter {
+        final UUID id;
+        final String cell;
+        int score;
+        boolean ready;
+        BukkitTask prepTask;
+        BossBar bar;
+
+        Fighter(UUID id, String cell) {
+            this.id = id;
+            this.cell = cell;
+        }
+
+        Player player() {
+            return Bukkit.getPlayer(id);
+        }
+    }
+
+    private final Map<String, Fighter> slots = new HashMap<>(); // "a" / "b"
+    private final Deque<UUID> queue = new ArrayDeque<>();
     private final Map<String, Integer> caps = new HashMap<>();
+    private Phase phase = Phase.SETUP;
+    private int round;
     private List<String> banned;
     private File loadoutFile;
     private YamlConfiguration loadouts;
+    private TextDisplay board;
+    private ItemDisplay itemA, itemB;
+    private float spin;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         banned = getConfig().getStringList("banned");
-        var capSection = getConfig().getConfigurationSection("caps");
+        ConfigurationSection capSection = getConfig().getConfigurationSection("caps");
         if (capSection != null) capSection.getKeys(false).forEach(k -> caps.put(k, capSection.getInt(k)));
         loadoutFile = new File(getDataFolder(), "loadouts.yml");
         loadouts = YamlConfiguration.loadConfiguration(loadoutFile);
         getServer().getPluginManager().registerEvents(this, this);
-        // Players already in the arena after a reload start a fresh preparation.
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (inArena(p)) startPrep(p, true);
-        }
+        Bukkit.getScheduler().runTask(this, () -> {
+            setDoors(false);
+            for (Player p : Bukkit.getOnlinePlayers()) if (inArena(p)) toSpectator(p);
+        });
+        // Spin the weapons on the scoreboard and keep it alive while anyone is watching.
+        Bukkit.getScheduler().runTaskTimer(this, () -> {
+            World w = arena();
+            if (w == null || w.getPlayers().isEmpty()) return;
+            spin += 6f;
+            if (itemA != null && itemA.isValid()) itemA.setRotation(spin, 0);
+            if (itemB != null && itemB.isValid()) itemB.setRotation(-spin, 0);
+            if (board == null || !board.isValid()) updateBoard();
+        }, 40L, 2L);
     }
 
     @Override
     public void onDisable() {
-        preparing.forEach((id, prep) -> {
-            prep.task().cancel();
-            Player p = Bukkit.getPlayer(id);
-            if (p != null) p.hideBossBar(prep.bar());
-        });
+        slots.values().forEach(this::stopPrep);
+        setDoors(false);
+        removeBoard();
         saveLoadouts();
     }
+
+    // ---------------- helpers ----------------
 
     private World arena() {
         return Bukkit.getWorld(getConfig().getString("world", "arena"));
@@ -90,63 +134,27 @@ public final class CraftArena extends JavaPlugin implements Listener {
         return w != null && p.getWorld().equals(w);
     }
 
-    private Location randomSpot() {
+    private Location loc(String path) {
+        ConfigurationSection s = getConfig().getConfigurationSection(path);
+        return new Location(arena(), s.getDouble("x"), s.getDouble("y"), s.getDouble("z"), (float) s.getDouble("yaw"), 0);
+    }
+
+    private Fighter fighter(Player p) {
+        for (Fighter f : slots.values()) if (f.id.equals(p.getUniqueId())) return f;
+        return null;
+    }
+
+    private Fighter opponent(Fighter f) {
+        return slots.get(f.cell.equals("a") ? "b" : "a");
+    }
+
+    private void tell(Player p, String msg, NamedTextColor color) {
+        if (p != null) p.sendMessage(Component.text("⚔ " + msg, color));
+    }
+
+    private void announce(String msg, NamedTextColor color) {
         World w = arena();
-        double r = getConfig().getDouble("spawn-radius", 22) * Math.sqrt(ThreadLocalRandom.current().nextDouble());
-        double a = ThreadLocalRandom.current().nextDouble(Math.PI * 2);
-        Location loc = new Location(w, getConfig().getDouble("center.x") + r * Math.cos(a), getConfig().getDouble("center.y"),
-                getConfig().getDouble("center.z") + r * Math.sin(a));
-        loc.setYaw((float) Math.toDegrees(Math.atan2(r * Math.cos(a), -r * Math.sin(a))));
-        return loc;
-    }
-
-    // ---- preparation phase ----
-
-    private void startPrep(Player p, boolean teleport) {
-        cancelPrep(p);
-        int seconds = getConfig().getInt("prep-seconds", 120);
-        p.setGameMode(GameMode.CREATIVE);
-        p.getInventory().setContents(loadout(p.getUniqueId()));
-        if (teleport) p.teleport(randomSpot());
-        BossBar bar = BossBar.bossBar(Component.text("Tayyorlanish: " + seconds + "s"), 1f, BossBar.Color.GREEN, BossBar.Overlay.PROGRESS);
-        p.showBossBar(bar);
-        p.showTitle(Title.title(Component.text("ARENA", NamedTextColor.GOLD, TextDecoration.BOLD),
-                Component.text("Creative inventardan istalgan narsani oling", NamedTextColor.YELLOW)));
-        p.sendMessage(Component.text("» " + seconds + " soniya: creative inventardan qurol, zirh va ovqat oling. ", NamedTextColor.YELLOW)
-                .append(Component.text("/ready", NamedTextColor.GREEN)).append(Component.text(" — tayyor bo'lsangiz.", NamedTextColor.YELLOW)));
-        int[] left = {seconds};
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(this, () -> {
-            left[0]--;
-            if (left[0] <= 0) {
-                finishPrep(p);
-                return;
-            }
-            bar.name(Component.text("Tayyorlanish: " + left[0] + "s  ·  /ready"));
-            bar.progress(Math.max(0f, left[0] / (float) seconds));
-            if (left[0] <= 10) bar.color(BossBar.Color.RED);
-        }, 20L, 20L);
-        preparing.put(p.getUniqueId(), new Prep(task, bar));
-    }
-
-    private void cancelPrep(Player p) {
-        Prep prep = preparing.remove(p.getUniqueId());
-        if (prep != null) {
-            prep.task().cancel();
-            p.hideBossBar(prep.bar());
-        }
-    }
-
-    private void finishPrep(Player p) {
-        cancelPrep(p);
-        if (!p.isOnline() || !inArena(p)) return;
-        ItemStack[] kit = sanitize(p.getInventory().getContents());
-        saveLoadout(p.getUniqueId(), kit);
-        p.getInventory().setContents(kit);
-        p.setGameMode(GameMode.ADVENTURE);
-        heal(p);
-        p.showTitle(Title.title(Component.text("JANG!", NamedTextColor.RED, TextDecoration.BOLD),
-                Component.text("O'lsangiz shu to'plam bilan qaytasiz", NamedTextColor.GRAY),
-                Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(2), Duration.ofMillis(500))));
+        if (w != null) w.getPlayers().forEach(p -> tell(p, msg, color));
     }
 
     private static void heal(Player p) {
@@ -158,7 +166,273 @@ public final class CraftArena extends JavaPlugin implements Listener {
         p.getActivePotionEffects().forEach(e -> p.removePotionEffect(e.getType()));
     }
 
-    /** Drops banned items and trims capped ones so every loadout stays fair. */
+    private void setDoors(boolean open) {
+        World w = arena();
+        if (w == null) return;
+        for (String cell : List.of("a", "b")) {
+            ConfigurationSection d = getConfig().getConfigurationSection("cells." + cell + ".door");
+            for (int x = d.getInt("x1"); x <= d.getInt("x2"); x++)
+                for (int y = d.getInt("y1"); y <= d.getInt("y2"); y++)
+                    for (int z = d.getInt("z1"); z <= d.getInt("z2"); z++)
+                        w.getBlockAt(x, y, z).setType(open ? Material.AIR : Material.IRON_BARS);
+        }
+    }
+
+    // ---------------- spectators and queue ----------------
+
+    private void toSpectator(Player p) {
+        p.setGameMode(GameMode.ADVENTURE);
+        p.getInventory().clear();
+        heal(p);
+        p.teleport(loc("spectator-spawn"));
+        tell(p, "Tribunadasiz. /join - jangga navbat olish", NamedTextColor.YELLOW);
+        updateBoard();
+    }
+
+    private void join(Player p) {
+        if (fighter(p) != null || queue.contains(p.getUniqueId())) {
+            tell(p, "Siz allaqachon navbatdasiz yoki jangdasiz.", NamedTextColor.GRAY);
+            return;
+        }
+        queue.addLast(p.getUniqueId());
+        tell(p, "Navbatga yozildingiz. O'rningiz: " + queue.size(), NamedTextColor.GREEN);
+        fillSlots();
+    }
+
+    /** Puts the next players from the queue into empty cells. */
+    private void fillSlots() {
+        for (String cell : List.of("a", "b")) {
+            if (slots.containsKey(cell)) continue;
+            UUID next;
+            while ((next = queue.pollFirst()) != null) {
+                Player p = Bukkit.getPlayer(next);
+                if (p != null && inArena(p)) {
+                    Fighter f = new Fighter(next, cell);
+                    slots.put(cell, f);
+                    announce(p.getName() + " arenaga chiqdi!", NamedTextColor.GOLD);
+                    startPrep(f);
+                    break;
+                }
+            }
+        }
+        updateBoard();
+    }
+
+    /** Removes a fighter (left, quit, gave up). The opponent wins the match. */
+    private void forfeit(Fighter f) {
+        stopPrep(f);
+        slots.remove(f.cell);
+        Fighter other = opponent(f);
+        if (phase == Phase.FIGHT) {
+            phase = Phase.SETUP;
+            setDoors(false);
+        }
+        if (other != null && other.player() != null) {
+            announce(other.player().getName() + " g'olib (raqib chiqib ketdi)!", NamedTextColor.GOLD);
+            resetForNextMatch(other);
+        }
+        fillSlots();
+    }
+
+    // ---------------- preparation ----------------
+
+    private void startPrep(Fighter f) {
+        Player p = f.player();
+        if (p == null) return;
+        stopPrep(f);
+        f.ready = false;
+        p.teleport(loc("cells." + f.cell + ".spawn"));
+        p.setGameMode(GameMode.CREATIVE);
+        p.getInventory().setContents(loadout(f.id));
+        heal(p);
+        int seconds = getConfig().getInt("prep-seconds", 120);
+        f.bar = BossBar.bossBar(Component.text("Qurol tanlash: " + seconds + "s · /ready"), 1f, BossBar.Color.GREEN, BossBar.Overlay.PROGRESS);
+        p.showBossBar(f.bar);
+        p.showTitle(Title.title(Component.text("QUROL TANLANG", NamedTextColor.GOLD, TextDecoration.BOLD),
+                Component.text("Creative inventardan istalgan narsa · /ready", NamedTextColor.YELLOW)));
+        int[] left = {seconds};
+        f.prepTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
+            if (--left[0] <= 0) {
+                finishPrep(f);
+                return;
+            }
+            f.bar.name(Component.text("Qurol tanlash: " + left[0] + "s · /ready"));
+            f.bar.progress(Math.max(0f, left[0] / (float) seconds));
+            if (left[0] <= 10) f.bar.color(BossBar.Color.RED);
+        }, 20L, 20L);
+        updateBoard();
+    }
+
+    private void stopPrep(Fighter f) {
+        if (f.prepTask != null) f.prepTask.cancel();
+        f.prepTask = null;
+        Player p = f.player();
+        if (f.bar != null && p != null) p.hideBossBar(f.bar);
+        f.bar = null;
+    }
+
+    private boolean preparing(Fighter f) {
+        return f.prepTask != null;
+    }
+
+    private void finishPrep(Fighter f) {
+        stopPrep(f);
+        Player p = f.player();
+        if (p == null || !inArena(p)) return;
+        ItemStack[] kit = sanitize(p.getInventory().getContents());
+        saveLoadout(f.id, kit);
+        p.getInventory().setContents(kit);
+        p.setGameMode(GameMode.ADVENTURE);
+        heal(p);
+        markReady(f);
+    }
+
+    private void markReady(Fighter f) {
+        f.ready = true;
+        Fighter other = opponent(f);
+        tell(f.player(), other == null ? "Tayyor! Raqib kutilmoqda..." : other.ready ? "Tayyor!" : "Tayyor! Raqib /ready yozishini kuting.", NamedTextColor.GREEN);
+        if (other != null && other.ready && phase == Phase.SETUP) startRound();
+        updateBoard();
+    }
+
+    // ---------------- rounds ----------------
+
+    private void startRound() {
+        phase = Phase.FIGHT;
+        round++;
+        setDoors(true);
+        for (Fighter f : slots.values()) {
+            Player p = f.player();
+            if (p != null) p.showTitle(Title.title(Component.text("JANG!", NamedTextColor.RED, TextDecoration.BOLD),
+                    Component.text("Darvozalar ochildi · Raund " + round, NamedTextColor.GRAY),
+                    Title.Times.times(Duration.ofMillis(150), Duration.ofSeconds(2), Duration.ofMillis(400))));
+        }
+        announce("Raund " + round + " boshlandi!", NamedTextColor.RED);
+        updateBoard();
+    }
+
+    private void endRound(Fighter winner, Fighter loser) {
+        phase = Phase.SETUP;
+        setDoors(false);
+        winner.score++;
+        Player wp = winner.player();
+        announce((wp != null ? wp.getName() : "?") + " raundni yutdi! " + scoreText(), NamedTextColor.GOLD);
+        int toWin = getConfig().getInt("rounds-to-win", 3);
+        if (winner.score >= toWin) {
+            announce((wp != null ? wp.getName() : "?") + " MATCHNI YUTDI! Chempion qoladi, keyingi raqib: /join", NamedTextColor.GOLD);
+            slots.remove(loser.cell); // the loser goes to the stands in onRespawn
+            resetForNextMatch(winner);
+            fillSlots();
+            return;
+        }
+        winner.ready = loser.ready = false;
+        if (wp != null) backToCell(winner);
+        // the loser is sent to the cell in onRespawn
+        updateBoard();
+    }
+
+    private void resetForNextMatch(Fighter champion) {
+        champion.score = 0;
+        champion.ready = false;
+        round = 0;
+        backToCell(champion);
+    }
+
+    private void backToCell(Fighter f) {
+        Player p = f.player();
+        if (p == null) return;
+        p.teleport(loc("cells." + f.cell + ".spawn"));
+        p.setGameMode(GameMode.ADVENTURE);
+        p.getInventory().setContents(loadout(f.id));
+        heal(p);
+        tell(p, "Keyingi raund: /ready  ·  qurolni almashtirish: /loadout", NamedTextColor.YELLOW);
+    }
+
+    private String scoreText() {
+        Fighter a = slots.get("a"), b = slots.get("b");
+        return "(" + (a != null ? a.score : 0) + " : " + (b != null ? b.score : 0) + ")";
+    }
+
+    // ---------------- scoreboard above the arena ----------------
+
+    private ItemStack weapon(UUID id) {
+        ItemStack[] kit = loadout(id);
+        for (int i = 0; i < 9 && i < kit.length; i++) {
+            ItemStack item = kit[i];
+            if (item == null) continue;
+            String n = item.getType().name();
+            if (n.endsWith("_SWORD") || n.endsWith("_AXE") || n.endsWith("_SPEAR") || n.equals("MACE") || n.equals("TRIDENT")
+                    || n.equals("BOW") || n.equals("CROSSBOW")) return item;
+        }
+        for (int i = 0; i < 9 && i < kit.length; i++) if (kit[i] != null) return kit[i];
+        return new ItemStack(Material.IRON_SWORD);
+    }
+
+    private void removeBoard() {
+        for (Entity e : List.of(board, itemA, itemB).stream().filter(java.util.Objects::nonNull).toList()) e.remove();
+        board = null;
+        itemA = itemB = null;
+    }
+
+    private void updateBoard() {
+        World w = arena();
+        if (w == null) return;
+        Location at = loc("board");
+        if (!at.isChunkLoaded()) return;
+        if (board == null || !board.isValid()) {
+            removeBoard();
+            board = w.spawn(at, TextDisplay.class, d -> {
+                d.setPersistent(false);
+                d.setBillboard(Display.Billboard.CENTER);
+                d.setBackgroundColor(Color.fromARGB(170, 10, 8, 20));
+                d.setShadowed(true);
+                d.setLineWidth(400);
+                d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(3.5f), new AxisAngle4f()));
+            });
+            itemA = spawnItem(at.clone().add(9, 1, 0));
+            itemB = spawnItem(at.clone().add(-9, 1, 0));
+        }
+        Fighter a = slots.get("a"), b = slots.get("b");
+        Component text = Component.text("⚔ ARENA ⚔\n", NamedTextColor.GOLD, TextDecoration.BOLD);
+        if (a == null && b == null) {
+            text = text.append(Component.text("Jang yo'q · /join\n", NamedTextColor.GRAY).decoration(TextDecoration.BOLD, false));
+        } else {
+            text = text.append(Component.text(name(a), NamedTextColor.AQUA))
+                    .append(Component.text("  " + (a != null ? a.score : 0) + " : " + (b != null ? b.score : 0) + "  ", NamedTextColor.WHITE))
+                    .append(Component.text(name(b), NamedTextColor.LIGHT_PURPLE))
+                    .append(Component.text("\n" + status(a, b), phase == Phase.FIGHT ? NamedTextColor.RED : NamedTextColor.YELLOW)
+                            .decoration(TextDecoration.BOLD, false));
+        }
+        text = text.append(Component.text("\nNavbat: " + queue.size() + " · birinchi " + getConfig().getInt("rounds-to-win", 3)
+                + " ochko yutadi", NamedTextColor.DARK_GRAY).decoration(TextDecoration.BOLD, false));
+        board.text(text);
+        itemA.setItemStack(a != null ? weapon(a.id) : null);
+        itemB.setItemStack(b != null ? weapon(b.id) : null);
+    }
+
+    private ItemDisplay spawnItem(Location at) {
+        return at.getWorld().spawn(at, ItemDisplay.class, d -> {
+            d.setPersistent(false);
+            d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(5f), new AxisAngle4f()));
+            d.setBrightness(new Display.Brightness(15, 15));
+        });
+    }
+
+    private String name(Fighter f) {
+        Player p = f == null ? null : f.player();
+        return p == null ? "???" : p.getName();
+    }
+
+    private String status(Fighter a, Fighter b) {
+        if (phase == Phase.FIGHT) return "Raund " + round + " · JANG!";
+        if (a == null || b == null) return "Raqib kutilmoqda... /join";
+        String wa = a.ready ? "✔" : preparing(a) ? "qurol tanlamoqda" : "/ready kutilmoqda";
+        String wb = b.ready ? "✔" : preparing(b) ? "qurol tanlamoqda" : "/ready kutilmoqda";
+        return wa + "  |  " + wb;
+    }
+
+    // ---------------- loadouts ----------------
+
     private ItemStack[] sanitize(ItemStack[] contents) {
         Map<Material, Integer> used = new HashMap<>();
         ItemStack[] out = new ItemStack[contents.length];
@@ -166,7 +440,7 @@ public final class CraftArena extends JavaPlugin implements Listener {
             ItemStack item = contents[i];
             if (item == null || item.getType().isAir()) continue;
             String id = item.getType().name();
-            if (banned.stream().anyMatch(b -> id.startsWith(b) || id.endsWith(b) || id.contains(b))) continue;
+            if (banned.stream().anyMatch(id::contains)) continue;
             Integer cap = caps.get(id);
             if (cap != null) {
                 int room = cap - used.getOrDefault(item.getType(), 0);
@@ -179,8 +453,6 @@ public final class CraftArena extends JavaPlugin implements Listener {
         }
         return out;
     }
-
-    // ---- loadout storage ----
 
     private ItemStack[] loadout(UUID id) {
         ItemStack[] contents = new ItemStack[41];
@@ -208,41 +480,49 @@ public final class CraftArena extends JavaPlugin implements Listener {
         }
     }
 
-    // ---- events ----
+    // ---------------- events ----------------
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldChange(PlayerChangedWorldEvent event) {
         Player p = event.getPlayer();
+        if (event.getFrom().equals(arena())) leaveArena(p);
         if (inArena(p)) {
-            // A few ticks later so Multiverse's own gamemode/inventory switch has happened first.
-            Bukkit.getScheduler().runTaskLater(this, () -> {
-                if (p.isOnline() && inArena(p)) startPrep(p, true);
-            }, 5L);
-        } else if (preparing.containsKey(p.getUniqueId())) {
-            cancelPrep(p);
+            // after Multiverse's own gamemode/inventory switch
+            Bukkit.getScheduler().runTaskLater(this, () -> { if (p.isOnline() && inArena(p)) toSpectator(p); }, 5L);
         }
+    }
+
+    private void leaveArena(Player p) {
+        queue.remove(p.getUniqueId());
+        Fighter f = fighter(p);
+        if (f != null) forfeit(f);
+        updateBoard();
     }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player p = event.getPlayer();
-        Bukkit.getScheduler().runTaskLater(this, () -> {
-            if (p.isOnline() && inArena(p)) startPrep(p, true);
-        }, 10L);
+        Bukkit.getScheduler().runTaskLater(this, () -> { if (p.isOnline() && inArena(p)) toSpectator(p); }, 10L);
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        cancelPrep(event.getPlayer());
+        leaveArena(event.getPlayer());
     }
 
-    /** Nobody can hurt or be hurt by a player who is still picking gear. */
+    /** In the arena only the two fighters can hurt each other, and only while the gates are open. */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onDamage(EntityDamageByEntityEvent event) {
-        Entity damager = event.getDamager();
-        if (damager instanceof Projectile proj && proj.getShooter() instanceof Entity shooter) damager = shooter;
-        if (preparing.containsKey(event.getEntity().getUniqueId()) || preparing.containsKey(damager.getUniqueId())) {
+    public void onDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player victim) || !inArena(victim)) return;
+        Fighter vf = fighter(victim);
+        if (vf == null || phase != Phase.FIGHT) {
             event.setCancelled(true);
+            return;
+        }
+        if (event instanceof EntityDamageByEntityEvent byEntity) {
+            Entity damager = byEntity.getDamager();
+            if (damager instanceof Projectile proj && proj.getShooter() instanceof Entity shooter) damager = shooter;
+            if (damager instanceof Player dp && fighter(dp) == null) event.setCancelled(true);
         }
     }
 
@@ -253,23 +533,29 @@ public final class CraftArena extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onDeath(PlayerDeathEvent event) {
-        if (!inArena(event.getPlayer())) return;
+        Player p = event.getPlayer();
+        if (!inArena(p)) return;
         event.getDrops().clear();
         event.setDroppedExp(0);
         event.setKeepLevel(true);
+        Fighter loser = fighter(p);
+        if (loser != null && phase == Phase.FIGHT) {
+            Fighter winner = opponent(loser);
+            if (winner != null) endRound(winner, loser);
+        }
     }
 
-    // HIGHEST so this runs after EssentialsSpawn (which would send everyone to the castle)
+    // HIGHEST so this wins over EssentialsSpawn (which would send everyone to the castle)
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onRespawn(PlayerRespawnEvent event) {
         Player p = event.getPlayer();
         if (!inArena(p)) return;
-        event.setRespawnLocation(randomSpot());
+        Fighter f = fighter(p);
+        event.setRespawnLocation(f != null ? loc("cells." + f.cell + ".spawn") : loc("spectator-spawn"));
         Bukkit.getScheduler().runTask(this, () -> {
-            if (!p.isOnline() || !inArena(p) || preparing.containsKey(p.getUniqueId())) return;
-            p.getInventory().setContents(loadout(p.getUniqueId()));
-            p.setGameMode(GameMode.ADVENTURE);
-            heal(p);
+            if (!p.isOnline() || !inArena(p)) return;
+            if (f != null && slots.containsValue(f)) backToCell(f);
+            else toSpectator(p);
         });
     }
 
@@ -277,14 +563,36 @@ public final class CraftArena extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player p)) return false;
         if (!inArena(p)) {
-            p.sendMessage(Component.text("Bu buyruq faqat arenada ishlaydi: /arena", NamedTextColor.RED));
+            tell(p, "Bu buyruq faqat arenada ishlaydi: /arena", NamedTextColor.RED);
             return true;
         }
-        if (command.getName().equals("ready")) {
-            if (preparing.containsKey(p.getUniqueId())) finishPrep(p);
-            else p.sendMessage(Component.text("Siz allaqachon jangdasiz. /loadout - to'plamni o'zgartirish", NamedTextColor.GRAY));
-        } else {
-            startPrep(p, false);
+        Fighter f = fighter(p);
+        switch (command.getName()) {
+            case "join" -> join(p);
+            case "leave" -> {
+                if (f != null) {
+                    tell(p, "Jangdan chiqdingiz.", NamedTextColor.GRAY);
+                    forfeit(f);
+                    toSpectator(p);
+                } else if (queue.remove(p.getUniqueId())) {
+                    tell(p, "Navbatdan chiqdingiz.", NamedTextColor.GRAY);
+                    updateBoard();
+                }
+            }
+            case "ready" -> {
+                if (f == null) tell(p, "Avval /join bilan navbatga yoziling.", NamedTextColor.GRAY);
+                else if (phase == Phase.FIGHT) tell(p, "Jang ketmoqda!", NamedTextColor.GRAY);
+                else if (preparing(f)) finishPrep(f);
+                else if (!f.ready) markReady(f);
+            }
+            case "loadout" -> {
+                if (f == null) tell(p, "Avval /join bilan navbatga yoziling.", NamedTextColor.GRAY);
+                else if (phase == Phase.FIGHT) tell(p, "Jang paytida qurolni almashtirib bo'lmaydi.", NamedTextColor.GRAY);
+                else startPrep(f);
+            }
+            default -> {
+                return false;
+            }
         }
         return true;
     }

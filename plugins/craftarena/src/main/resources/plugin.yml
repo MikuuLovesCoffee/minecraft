@@ -2,11 +2,15 @@ name: CraftArena
 version: '${version}'
 main: coffee.mikuuloves.craftarena.CraftArena
 api-version: '26.3'
-description: Kit arena - 2 minutes to pick any gear in creative, then fight and respawn with that loadout.
+description: Gladiator duel arena with gear preparation, gates, rounds and a floating scoreboard.
 author: MikuuLovesCoffee
 softdepend: [Multiverse-Core, Essentials]
 commands:
+  join:
+    description: Join the arena queue.
+  leave:
+    description: Leave the arena queue or give up the current match.
   ready:
-    description: End the arena preparation early and start fighting.
+    description: Ready for the next round (ends gear preparation).
   loadout:
-    description: Pick your arena gear again (restarts the 2 minute preparation).
+    description: Pick your arena gear again (2 minutes in creative, only in your cell).

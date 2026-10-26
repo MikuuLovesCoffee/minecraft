@@ -1,15 +1,22 @@
-# The kit arena world
+# Gladiator arena: two fighters pick gear in their cells, both /ready, the gates open, first to
+# rounds-to-win points wins. The winner stays; the next player in the /join queue challenges.
 world: arena
-# Seconds of creative-mode preparation to pick gear
 prep-seconds: 120
-# Players (re)spawn at a random spot within this radius of the centre
-center: {x: 0.5, y: -60, z: 0.5}
-spawn-radius: 22
+rounds-to-win: 3
 
-# Removed from loadouts (prefix / suffix match on the item id)
+spectator-spawn: {x: 0.5, y: -51, z: 36.5, yaw: 180}
+board: {x: 0.5, y: -45, z: 0.5}
+cells:
+  a:
+    spawn: {x: 35.5, y: -60, z: 0.5, yaw: 90}
+    door: {x1: 30, y1: -60, z1: -1, x2: 30, y2: -58, z2: 1}
+  b:
+    spawn: {x: -34.5, y: -60, z: 0.5, yaw: -90}
+    door: {x1: -30, y1: -60, z1: -1, x2: -30, y2: -58, z2: 1}
+
+# Removed from loadouts (matched anywhere in the item id). Weapons are all allowed.
 banned: [_SPAWN_EGG, BARRIER, LIGHT, STRUCTURE_, JIGSAW, DEBUG_STICK, COMMAND_BLOCK, KNOWLEDGE_BOOK,
-         BEDROCK, END_PORTAL_FRAME, SPAWNER, TRIAL_SPAWNER, VAULT, TNT, END_CRYSTAL, RESPAWN_ANCHOR,
-         LAVA_BUCKET, WATER_BUCKET, POWDER_SNOW_BUCKET, MACE]
+         BEDROCK, END_PORTAL_FRAME, SPAWNER, VAULT, TNT, RESPAWN_ANCHOR, LAVA_BUCKET, POWDER_SNOW_BUCKET]
 
 # Maximum total amount per item in a loadout
 caps:
@@ -17,4 +24,3 @@ caps:
   ENCHANTED_GOLDEN_APPLE: 2
   GOLDEN_APPLE: 8
   ENDER_PEARL: 8
-  WIND_CHARGE: 16

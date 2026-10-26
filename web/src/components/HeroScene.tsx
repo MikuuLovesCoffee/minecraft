@@ -23,6 +23,14 @@ export function HeroScene() {
   useEffect(() => {
     let disposed = false;
     const viewers: { dispose(): void }[] = [];
+    // On a PC (mouse that can hover) both characters look at the cursor; touch screens keep drag-to-rotate.
+    const followMouse = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const mouse = { x: window.innerWidth / 2, y: window.innerHeight / 3 };
+    const onMouse = (e: MouseEvent) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    };
+    if (followMouse) window.addEventListener('mousemove', onMouse);
 
     (async () => {
       const skinview3d = await import('skinview3d');
@@ -48,8 +56,31 @@ export function HeroScene() {
         void viewer.loadSkin(hero.skin, { model: hero.slim ? 'slim' : 'default' });
         const onResize = () => viewer.setSize(canvas.clientWidth, canvas.clientHeight);
         window.addEventListener('resize', onResize);
+
+        let frame = 0;
+        if (followMouse) {
+          viewer.controls.enableRotate = false;
+          const { head } = viewer.playerObject.skin;
+          const look = () => {
+            const r = canvas.getBoundingClientRect();
+            // direction from the character's head (upper part of its canvas) to the cursor
+            const dx = mouse.x - (r.left + r.width / 2);
+            const dy = mouse.y - (r.top + r.height * 0.28);
+            const yaw = Math.max(-1.1, Math.min(1.1, Math.atan2(dx, 420)));
+            const pitch = Math.max(-0.6, Math.min(0.6, Math.atan2(dy, 420)));
+            // body turns a little, the head does the rest; eased so it moves smoothly
+            const bodyYaw = hero.turn * 0.4 + yaw * 0.35;
+            viewer.playerObject.rotation.y += (bodyYaw - viewer.playerObject.rotation.y) * 0.12;
+            head.rotation.y += (yaw - bodyYaw - head.rotation.y) * 0.15;
+            head.rotation.x += (pitch - head.rotation.x) * 0.15;
+            frame = requestAnimationFrame(look);
+          };
+          frame = requestAnimationFrame(look);
+        }
+
         viewers.push({
           dispose() {
+            cancelAnimationFrame(frame);
             window.removeEventListener('resize', onResize);
             viewer.dispose();
           },
@@ -59,6 +90,7 @@ export function HeroScene() {
 
     return () => {
       disposed = true;
+      window.removeEventListener('mousemove', onMouse);
       viewers.forEach((v) => v.dispose());
     };
   }, []);

@@ -96,7 +96,7 @@ export function AdminPanel() {
           )}
         </Card>
 
-        <Card>
+        <Card className="self-start">
           <h3 className="mb-3 font-pixel text-lg">
             {t.admin.online} {status && <span className="text-grass">{status.players.online}/{status.players.max}</span>}
           </h3>
@@ -112,6 +112,28 @@ export function AdminPanel() {
           </ul>
         </Card>
       </div>
+
+      <section>
+        <h3 className="font-pixel text-2xl">{t.admin.cmdTitle}</h3>
+        <p className="mb-4 mt-1 text-sm text-muted">{t.admin.cmdNote}</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          {t.admin.cmdGroups.map(([group, commands]) => (
+            <Card key={group}>
+              <h4 className="mb-3 font-pixel text-lg text-gold">{group}</h4>
+              <dl className="divide-y divide-line">
+                {commands.map(([cmd, desc]) => (
+                  <div key={cmd} className="flex flex-col gap-1 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <dt>
+                      <code className="text-sm text-diamond">{cmd}</code>
+                    </dt>
+                    <dd className="text-sm text-muted sm:text-right">{desc}</dd>
+                  </div>
+                ))}
+              </dl>
+            </Card>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
