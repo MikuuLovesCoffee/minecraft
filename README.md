@@ -5,6 +5,8 @@ safely next to other projects on a shared Ubuntu 24.04 VPS.
 
 **Join:** `mc.mikuuloves.coffee` (Java Edition 26.3 — official launcher or TLauncher)
 
+If your network blocks port 25565, use `mc.mikuuloves.coffee:2223` (same server).
+
 ## What's on the server
 
 | World | How to get there | Rules |
