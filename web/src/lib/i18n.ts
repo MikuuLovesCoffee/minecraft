@@ -66,11 +66,12 @@ const uz = {
     commandsTitle: 'Buyruqlar',
     groups: [
       ['Kirish', [['/captcha <kod>', 'Avval chatdagi kodni yozing'], ['/register <parol> <parol>', 'Ro‘yxatdan o‘tish'], ['/login <parol>', 'Kirish'], ['/changepassword <eski> <yangi>', 'Parolni o‘zgartirish']]],
-      ['Harakat', [['/spawn', 'Spawnga qaytish'], ['/rtp', 'Tasodifiy joyga teleport'], ['/tpa <ism>', 'O‘yinchiga teleport so‘rash'], ['/tpaccept · /tpdeny', 'So‘rovni qabul / rad qilish'], ['/sethome <nom>', 'Uy saqlash (3 tagacha)'], ['/home <nom>', 'Uyga qaytish'], ['/warp', 'Dunyolar ro‘yxati']]],
+      ['Harakat', [['/spawn', 'Spawnga qaytish'], ['/rtp', 'Tasodifiy joyga teleport'], ['/tpa <ism>', 'O‘yinchiga teleport so‘rash'], ['/tpto <ism>', 'O‘yinchiga borish (so‘rov)'], ['/call <ism>', 'O‘yinchini yoningizga chaqirish'], ['/tpaccept · /tpdeny', 'So‘rovni qabul / rad qilish (/yes · /no)'], ['/sethome <nom>', 'Uy saqlash (3 tagacha)'], ['/home <nom>', 'Uyga qaytish'], ['/warp', 'Dunyolar ro‘yxati']]],
       ['Iqtisod', [['/bal', 'Balans'], ['/pay <ism> <summa>', 'Pul o‘tkazish'], ['/baltop', 'Eng boylar'], ['/sell hand · /sell all', 'Buyumlarni sotish'], ['/worth', 'Buyum narxi'], ['/ah', 'Auksion']]],
       ['Hudud (claim)', [['Oltin belkurak', 'Ikki burchakni bosing — hudud tayyor'], ['/claim', 'Atrofingizdagi joyni olish'], ['/trust <ism>', 'Do‘stga qurishga ruxsat'], ['/containertrust <ism>', 'Sandiqlarni ochishga ruxsat'], ['/untrust <ism>', 'Ruxsatni olish'], ['/claimslist', 'Hududlaringiz'], ['/abandonclaim', 'Hududdan voz kechish']]],
       ['Arena', [['/arena', 'Gladiator arenaga (tribuna)'], ['/join', 'Jangga navbat olish'], ['/join <ism>', 'Do‘stni jangga chaqirish (u /join <siz> yozadi)'], ['/ready', 'Tayyor — ikkalangiz yozsangiz darvozalar ochiladi'], ['/loadout', 'Kamerada qurolni qayta tanlash'], ['/leave', 'Navbat yoki jangdan chiqish'], ['/pvp', 'Arenaga borish (/arena bilan bir xil)']]],
       ['Boshqa', [['/msg <ism> <xabar>', 'Shaxsiy xabar'], ['/sb', 'Skorbordni yoqish / o‘chirish'], ['/skin <ism>', 'Skin o‘rnatish']]],
+      ['Tezlik', [['/mode low', 'Ko‘proq FPS, kamroq ping (yaqinni ko‘rish)'], ['/mode balanced', 'Oddiy rejim'], ['/mode high', 'Uzoqni ko‘rish (kuchli kompyuter)'], ['/ping [ism]', 'Pingni ko‘rish'], ['/lag', 'Server TPS va MSPT']]],
     ] as [string, [string, string][]][],
   },
   help: {
@@ -120,7 +121,7 @@ const uz = {
     cmdTitle: 'Admin buyruqlari',
     cmdNote: 'Faqat OWNER/ADMIN uchun. O‘yinda yoziladi; "Server" bo‘limi — ssh craftmine orqali.',
     cmdGroups: [
-      ['Asosiy', [['/gamemode creative · survival · spectator', 'O‘yin rejimi'], ['/tp <ism> · /tphere <ism>', 'Teleport'], ['/fly · /heal · /feed', 'Uchish, davolash'], ['/vanish', 'Ko‘rinmas bo‘lish'], ['/invsee <ism> · /ec <ism>', 'Inventar / ender sandiq'], ['/broadcast <xabar>', 'Hammaga e’lon']]],
+      ['Asosiy', [['/gamemode creative · survival · spectator', 'O‘yin rejimi'], ['/goto <ism> · /bring <ism>', 'O‘yinchiga borish / uni yoningizga tortish'], ['/fly · /heal · /feed', 'Uchish, davolash'], ['/vanish', 'Ko‘rinmas bo‘lish'], ['/invsee <ism> · /ec <ism>', 'Inventar / ender sandiq'], ['/broadcast <xabar>', 'Hammaga e’lon'], ['/servermode auto · normal · eco', 'Server tezlik rejimi (auto: lag bo‘lsa eco)']]],
       ['Jazo', [['/kick <ism> <sabab>', 'Chiqarib yuborish'], ['/ban <ism> <sabab>', 'Doimiy ban'], ['/tempban <ism> 1d <sabab>', 'Vaqtinchalik ban'], ['/unban <ism>', 'Bandan chiqarish'], ['/mute <ism> 10m', 'Chatni yopish'], ['/grim alerts', 'Cheat ogohlantirishlari']]],
       ['Iqtisod va buyumlar', [['/eco give|take|set <ism> <summa>', 'Pulni boshqarish'], ['/give <ism> <buyum> <soni>', 'Buyum berish'], ['/kit starter <ism>', 'Starter kit berish'], ['/quiz start · skip · reload', 'Viktorina']]],
       ['Himoya va tiklash', [['/rg bypass', 'Spawn himoyasini o‘zingiz uchun yoqish/o‘chirish'], ['/pr l r:10', 'Kim nimani buzganini ko‘rish (Prism)'], ['/pr rollback p:<ism> t:1h r:30', 'Buzilganlarni qaytarish'], ['/irp restore <ism>', 'Yo‘qolgan inventarni tiklash']]],
@@ -197,11 +198,12 @@ const en: Dict = {
     commandsTitle: 'Commands',
     groups: [
       ['Account', [['/captcha <code>', 'First type the code shown in chat'], ['/register <pass> <pass>', 'Register'], ['/login <pass>', 'Log in'], ['/changepassword <old> <new>', 'Change password']]],
-      ['Moving', [['/spawn', 'Back to spawn'], ['/rtp', 'Random teleport'], ['/tpa <name>', 'Ask to teleport to a player'], ['/tpaccept · /tpdeny', 'Accept / deny a request'], ['/sethome <name>', 'Save a home (up to 3)'], ['/home <name>', 'Go home'], ['/warp', 'List of worlds']]],
+      ['Moving', [['/spawn', 'Back to spawn'], ['/rtp', 'Random teleport'], ['/tpa <name>', 'Ask to teleport to a player'], ['/tpto <name>', 'Ask to go to a player'], ['/call <name>', 'Ask a player to come to you'], ['/tpaccept · /tpdeny', 'Accept / deny a request (/yes · /no)'], ['/sethome <name>', 'Save a home (up to 3)'], ['/home <name>', 'Go home'], ['/warp', 'List of worlds']]],
       ['Economy', [['/bal', 'Balance'], ['/pay <name> <amount>', 'Send money'], ['/baltop', 'Richest players'], ['/sell hand · /sell all', 'Sell items'], ['/worth', 'Item price'], ['/ah', 'Auction house']]],
       ['Land claims', [['Golden shovel', 'Click two corners — claim created'], ['/claim', 'Claim the area around you'], ['/trust <name>', 'Let a friend build'], ['/containertrust <name>', 'Let a friend open chests'], ['/untrust <name>', 'Remove access'], ['/claimslist', 'Your claims'], ['/abandonclaim', 'Give up a claim']]],
       ['Arena', [['/arena', 'Gladiator arena (stands)'], ['/join', 'Queue for a fight'], ['/join <name>', 'Challenge a friend (they type /join <you>)'], ['/ready', 'Ready — when both are, the gates open'], ['/loadout', 'Pick gear again in your cell'], ['/leave', 'Leave the queue or the fight'], ['/pvp', 'Go to the arena (same as /arena)']]],
       ['Other', [['/msg <name> <text>', 'Private message'], ['/sb', 'Scoreboard on / off'], ['/skin <name>', 'Set a skin']]],
+      ['Performance', [['/mode low', 'More FPS, less ping (shorter view)'], ['/mode balanced', 'Default mode'], ['/mode high', 'See further (strong PC)'], ['/ping [name]', 'Show ping'], ['/lag', 'Server TPS and MSPT']]],
     ],
   },
   help: {
@@ -251,7 +253,7 @@ const en: Dict = {
     cmdTitle: 'Admin commands',
     cmdNote: 'OWNER/ADMIN only. Typed in-game; the "Server" group is over ssh craftmine.',
     cmdGroups: [
-      ['Basics', [['/gamemode creative · survival · spectator', 'Game mode'], ['/tp <name> · /tphere <name>', 'Teleport'], ['/fly · /heal · /feed', 'Fly, heal'], ['/vanish', 'Become invisible'], ['/invsee <name> · /ec <name>', 'Inventory / ender chest'], ['/broadcast <text>', 'Announce to everyone']]],
+      ['Basics', [['/gamemode creative · survival · spectator', 'Game mode'], ['/goto <name> · /bring <name>', 'Jump to a player / pull them to you'], ['/fly · /heal · /feed', 'Fly, heal'], ['/vanish', 'Become invisible'], ['/invsee <name> · /ec <name>', 'Inventory / ender chest'], ['/broadcast <text>', 'Announce to everyone'], ['/servermode auto · normal · eco', 'Server performance mode (auto: eco while lagging)']]],
       ['Punishments', [['/kick <name> <reason>', 'Kick'], ['/ban <name> <reason>', 'Permanent ban'], ['/tempban <name> 1d <reason>', 'Temporary ban'], ['/unban <name>', 'Unban'], ['/mute <name> 10m', 'Mute chat'], ['/grim alerts', 'Cheat alerts']]],
       ['Economy & items', [['/eco give|take|set <name> <amount>', 'Manage money'], ['/give <name> <item> <count>', 'Give items'], ['/kit starter <name>', 'Give the starter kit'], ['/quiz start · skip · reload', 'Quiz']]],
       ['Protection & restore', [['/rg bypass', 'Toggle spawn protection for yourself'], ['/pr l r:10', 'See who broke what (Prism)'], ['/pr rollback p:<name> t:1h r:30', 'Undo griefing'], ['/irp restore <name>', 'Restore a lost inventory']]],
