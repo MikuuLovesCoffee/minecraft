@@ -29,6 +29,7 @@ cat > /opt/minecraft/start.sh <<'EOF'
 cd /opt/minecraft/server
 exec /usr/bin/java -Xms5G -Xmx5G \
  -XX:+UseCompactObjectHeaders -XX:+UseTransparentHugePages \
+ -XX:ReservedCodeCacheSize=400M -XX:-ClassUnloadingWithConcurrentMark \
  -XX:+AlwaysPreTouch -XX:+DisableExplicitGC -XX:+ParallelRefProcEnabled -XX:+PerfDisableSharedMem \
  -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:G1HeapWastePercent=5 \
  -XX:G1MaxNewSizePercent=40 -XX:G1MixedGCCountTarget=4 -XX:G1MixedGCLiveThresholdPercent=90 \
