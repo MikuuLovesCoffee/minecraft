@@ -1,0 +1,33 @@
+name: CraftPerf
+version: '${version}'
+main: coffee.mikuuloves.craftperf.CraftPerf
+api-version: '26.3'
+description: Per-player performance modes (/mode), /ping, /lag and an automatic eco mode when the server lags.
+author: MikuuLovesCoffee
+commands:
+  mode:
+    description: Choose your performance mode (low = more FPS, less lag).
+    usage: /mode [low|balanced|high]
+    aliases: [fps, perf]
+    permission: craftperf.mode
+  ping:
+    description: Show your ping or another player's.
+    usage: /ping [player]
+    permission: craftperf.ping
+  lag:
+    description: Show server TPS and tick time.
+    aliases: [ms]
+    permission: craftperf.lag
+  servermode:
+    description: Server-wide view distance mode.
+    usage: /servermode <auto|normal|eco>
+    permission: craftperf.admin
+permissions:
+  craftperf.mode:
+    default: true
+  craftperf.ping:
+    default: true
+  craftperf.lag:
+    default: true
+  craftperf.admin:
+    default: op
